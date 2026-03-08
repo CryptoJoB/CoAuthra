@@ -428,8 +428,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       </div>
 
       <div style="margin-top:8px;">
-        <div class="crow"><span class="clbl">Label scale</span><span class="cval" id="ls-v">1.0×</span></div>
-        <input type="range" id="ls-s" min="5" max="20" value="10" oninput="onLS(this.value)"/>
+        <div class="crow"><span class="clbl">Label scale</span><span class="cval" id="ls-v">2.0×</span></div>
+        <input type="range" id="ls-s" min="10" max="30" value="20" oninput="onLS(this.value)"/>
       </div>
     </div>
 
@@ -493,7 +493,7 @@ let allPapers=[], authorRec=null, coData=[];
 let topicColorMap={}; // topic name → stable cluster index, built once per search
 let geoEnrich={}; // permanent country cache — never wiped by filters
 let vizMode='network', mainView='graph', searchMode='name';
-let minLinks=5, yearMin=1950, yearMax=2025, labelScale=1.0;
+let minLinks=5, yearMin=1950, yearMax=2025, labelScale=2.0;
 let maxLinks=1000;
 let dark=true, selId=null;
 let zoomB=null, svgSel=null, sim=null;
@@ -501,6 +501,7 @@ let listAll=[], listSortKey='count', listSortDir=-1;
 let enabledClusters=new Set();
 let enabledTypes=new Set(['article','book','book-chapter','preprint','dataset','other']);
 let enabledInstitutions=null; // null = all enabled (before enrichment)
+let knownInstitutions=new Set(); // every institution ever seen — never shrinks
 let bylineFilterEnabled=false;
 let currentInstId=null; // OpenAlex institution ID for searched author's current institution
 let trendMode='works';
@@ -545,7 +546,6 @@ function setMode(m){
 function setViz(m){
   vizMode=m;
   document.querySelectorAll('#vtabs .tab').forEach(t=>t.classList.toggle('on',t.dataset.m===m));
-  // Show/hide geo panel vs canvas
   const isGeo=(m==='geo');
   document.getElementById('cvs').style.display=isGeo?'none':'';
   document.getElementById('geoview').style.display=isGeo?'flex':'none';
@@ -553,6 +553,16 @@ function setViz(m){
   document.getElementById('tg').classList.add('on');
   document.getElementById('tl').classList.remove('on');
   mainView='graph';
+  // Auto-sync trend chart: citations view → citations chart, network → publications chart
+  if(m==='citations' && trendMode==='works'){
+    trendMode='citations';
+    syncTrendHeading();
+    if(coData.length) drawTrendChart();
+  } else if(m==='network' && trendMode==='citations'){
+    trendMode='works';
+    syncTrendHeading();
+    if(coData.length) drawTrendChart();
+  }
   updateVLegend();
   if(coData.length) redraw();
 }
@@ -808,7 +818,7 @@ async function loadAuthor(rec){
   authorRec=rec;
   showStatus('<div class="ring"></div>Loading publications…');
   document.getElementById('graph').innerHTML='';
-  allPapers=[]; coData=[]; geoEnrich={}; _worldCache=null; enabledInstitutions=null; topicColorMap={};
+  allPapers=[]; coData=[]; geoEnrich={}; _worldCache=null; enabledInstitutions=null; knownInstitutions=new Set(); topicColorMap={};
   bylineFilterEnabled=false; currentInstId=null;
 
   const authorId=authorRec.id.replace('https://openalex.org/','');
@@ -1196,12 +1206,16 @@ function drawTrendChart(){
   renderTrendFromPapers(filtered);
 }
 
-function toggleTrend(){
-  trendMode=trendMode==='works'?'citations':'works';
+function syncTrendHeading(){
   document.getElementById('trend-heading').childNodes[0].textContent=
     trendMode==='works'?'Publications per year ':'Citations per year ';
   document.getElementById('trend-mode-lbl').textContent=
     trendMode==='works'?'switch to citations →':'switch to publications →';
+}
+
+function toggleTrend(){
+  trendMode=trendMode==='works'?'citations':'works';
+  syncTrendHeading();
   renderTrendFromPapers(getClusterFilteredPapers());
 }
 
@@ -1334,16 +1348,26 @@ function buildInstitutionFilter(){
   const insts=Object.entries(instCounts).sort((a,b)=>b[1]-a[1]);
   if(!insts.length&&!unknownCount){document.getElementById('inst-sec').style.display='none';return;}
 
-  // Initialise enabledInstitutions on first build; add any newly discovered
-  // institutions on subsequent calls (e.g. from fetchMissingCitations).
-  // Never remove institutions — only add — so late-arriving enrichment
-  // doesn't cause the allInstsOn check to fail in getClusterFilteredPapers.
+  // First build: initialise both sets from scratch.
+  // Subsequent builds (from fetchMissingCitations etc.): only auto-enable
+  // institutions that are genuinely new — never re-add ones the user deselected.
   if(!enabledInstitutions){
     enabledInstitutions=new Set(insts.map(([n])=>n));
     enabledInstitutions.add(UNKNOWN_INST);
+    insts.forEach(([n])=>knownInstitutions.add(n));
+    knownInstitutions.add(UNKNOWN_INST);
   } else {
-    insts.forEach(([n])=>enabledInstitutions.add(n));
-    enabledInstitutions.add(UNKNOWN_INST);
+    insts.forEach(([n])=>{
+      if(!knownInstitutions.has(n)){
+        // Truly new institution — auto-enable it
+        enabledInstitutions.add(n);
+        knownInstitutions.add(n);
+      }
+    });
+    if(!knownInstitutions.has(UNKNOWN_INST)){
+      enabledInstitutions.add(UNKNOWN_INST);
+      knownInstitutions.add(UNKNOWN_INST);
+    }
   }
 
   const knownRows=insts.map(([name,ct])=>`
@@ -1783,9 +1807,7 @@ function drawNetwork(coauthors){
     .attr('stroke',d=>d.type==='center'?'var(--accent)':'rgba(255,255,255,0.15)')
     .attr('stroke-width',d=>d.type==='center'?2.5:0.7);
 
-  const thresh=coauthors.length>80?(coauthors[Math.floor(coauthors.length*0.22)]?.count||1):1;
-  nd.filter(d=>d.type==='center'||(d.type==='author'&&d.count>=thresh))
-    .append('text')
+  nd.append('text')
     .attr('dy',d=>d.r+9*labelScale)
     .attr('text-anchor','middle')
     .attr('font-family','IBM Plex Sans,sans-serif')
