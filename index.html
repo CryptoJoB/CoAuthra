@@ -345,7 +345,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
   </div>
 
   <div class="sep"></div>
-  <button class="ibtn" id="interbtn" title="Show links between co-authors derived from shared papers" onclick="toggleInterLinks()" style="font-size:10px;font-weight:700;width:auto;padding:0 9px;white-space:nowrap;border-color:rgba(171,71,188,0.6);background:rgba(171,71,188,0.12);color:#ce93d8;gap:4px;display:flex;align-items:center;">★ Co-links</button>
+  <button class="ibtn" id="interbtn" title="Show links between co-authors derived from shared papers" onclick="toggleInterLinks()" style="font-size:10px;font-weight:700;width:auto;padding:0 9px;white-space:nowrap;border-color:rgba(171,71,188,0.9);background:rgba(171,71,188,0.28);color:#e1bee7;gap:4px;display:flex;align-items:center;">★ Co-links</button>
   <button class="action-btn" id="share-btn" onclick="sharePermalink()" title="Copy shareable link" disabled>⤴ Share</button>
   <button class="action-btn" id="export-btn" onclick="exportPNG()" title="Save network as PNG" disabled>↓ PNG</button>
   <button class="help-btn" onclick="showModal()" title="Help & About">?</button>
@@ -517,7 +517,7 @@ let trendMode='works';
 let geoProjection=null, geoZoomB=null;
 let _worldCache=null;
 // Inter-collaborator links toggle
-let interLinksEnabled=false;
+let interLinksEnabled=true;
 
 const COLORS=[
   '#4fc3f7','#ef5350','#66bb6a','#ffca28','#ab47bc',
@@ -2034,11 +2034,12 @@ async function drawGeo(){
   const visibleIds=new Set(getFilterVisible().map(c=>c.id));
   Object.entries(geoEnrich).forEach(([id,geo])=>{
     if(!geo.country) return;
-    // Only include authors that pass current filters
     if(!visibleIds.has(id)) return;
     const cc=geo.country.toUpperCase();
     const c=coDataById[id];
     const count=c?c.count:0;
+    // Only count as a collaborator if they have shared papers in the current filter window
+    if(!count) return;
     if(!countryData[cc]) countryData[cc]={count:0,collaborators:[],clusters:[]};
     countryData[cc].count+=count;
     if(c){countryData[cc].collaborators.push(c.name);countryData[cc].clusters.push(c.cluster);}
@@ -2236,6 +2237,17 @@ document.getElementById('qinput').addEventListener('keydown',e=>{if(e.key==='Ent
 // ═══════════════════════════════════════════════════════════════
 // WELCOME MODAL
 // ═══════════════════════════════════════════════════════════════
+function switchModalTab(tab){
+  ['guide','howitworks'].forEach(t=>{
+    const panel=document.getElementById(`mtabpanel-${t}`);
+    const btn=document.getElementById(`mtab-${t}`);
+    const active=t===tab;
+    panel.style.display=active?'':'none';
+    btn.style.borderBottomColor=active?'var(--accent)':'transparent';
+    btn.style.color=active?'var(--accent)':'var(--text2)';
+  });
+}
+
 function showModal(){
   const bg=document.getElementById('modal-bg');
   if(bg) bg.style.display='flex';
@@ -2424,13 +2436,25 @@ document.addEventListener('DOMContentLoaded',()=>{
       </div>
     </div>
 
-    <!-- Body -->
-    <div class="modal-body">
+    <!-- Tab bar -->
+    <div style="display:flex;gap:0;border-bottom:1px solid var(--border);padding:0 24px;flex-shrink:0;">
+      <button id="mtab-guide" onclick="switchModalTab('guide')"
+        style="background:none;border:none;border-bottom:2px solid var(--accent);color:var(--accent);
+               font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;
+               padding:8px 16px 7px;cursor:pointer;transition:all .15s;">Guide</button>
+      <button id="mtab-howitworks" onclick="switchModalTab('howitworks')"
+        style="background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);
+               font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;
+               padding:8px 16px 7px;cursor:pointer;transition:all .15s;">How It Works</button>
+    </div>
+
+    <!-- Tab: Guide -->
+    <div id="mtabpanel-guide" class="modal-body">
       <div class="modal-grid">
 
         <div class="mcard">
           <h3><span>🔍</span> Search</h3>
-          <p>Type a <strong>researcher name</strong> or paste an <strong>ORCID iD</strong> and hit <em>Visualize</em>. ScholarNet fetches all their publications and builds a live network of collaborators — no account needed.</p>
+          <p>Type a <strong>researcher name</strong> or paste an <strong>ORCID iD</strong> and hit <em>Search</em>. ScholarNet fetches all their publications and builds a live network of collaborators — no account needed.</p>
         </div>
 
         <div class="mcard">
@@ -2461,8 +2485,40 @@ document.addEventListener('DOMContentLoaded',()=>{
         </div>
 
         <div class="mcard" style="grid-column:1/-1;border-left:3px solid rgba(171,71,188,0.7);height:auto;overflow-y:visible;">
-          <h3 style="color:#ce93d8;"><span>★</span> Co-links</h3>
+          <h3 style="color:#ce93d8;"><span>★</span> Co-links <span style="font-size:9px;font-weight:400;color:var(--muted);margin-left:6px;">(enabled by default)</span></h3>
           <p>Reveals <strong>direct connections between co-authors themselves</strong>, not just to the searched author. Uses <strong>community detection</strong> to cluster research groups visually — turning a star graph into a <strong>research community map</strong>. Toggle with the <span style="color:#ce93d8;font-weight:600;">★ Co-links</span> button in the top-right toolbar. Purple dashed lines = co-author links. Lower <em>Max links shown</em> in the sidebar for cleaner cluster separation.</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tab: How It Works -->
+    <div id="mtabpanel-howitworks" class="modal-body" style="display:none;">
+      <div class="modal-grid">
+
+        <div class="mcard" style="grid-column:1/-1;height:auto;overflow-y:visible;">
+          <h3><span>📡</span> Data Source</h3>
+          <p>All publication and author data is fetched live from <a href="https://openalex.org" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">OpenAlex</a> — a free, open academic graph cataloguing <strong>474 million scholarly works</strong>. When you search a researcher, ScholarNet calls the OpenAlex REST API to retrieve their full publication list using cursor-based pagination (200 papers per request), then enriches each co-author with citation counts, institutions, and geographic data via batched author lookups.</p>
+        </div>
+
+        <div class="mcard" style="grid-column:1/-1;height:auto;overflow-y:visible;">
+          <h3><span>🕸</span> Network Construction</h3>
+          <p>Each paper's authorship list is parsed to extract co-authors. A co-author's <em>shared paper count</em> is the number of papers they appear on alongside the searched researcher. <em>Link strength</em> is a fractional weight — each paper contributes <code>1 / (number of co-authors)</code>, so papers with fewer authors create stronger ties. Co-authors are ranked by shared count and the top ~100 are shown by default to keep the graph readable.</p>
+        </div>
+
+        <div class="mcard" style="grid-column:1/-1;height:auto;overflow-y:visible;">
+          <h3><span>📐</span> Graph Layout</h3>
+          <p>The network is rendered using <a href="https://d3js.org" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">D3.js</a> force simulation with a custom layout pipeline. Nodes are pre-positioned into cluster sectors before the simulation begins — so research communities start physically close together — then refined by charge repulsion, link attraction, and a cluster cohesion force that continuously pulls same-topic nodes toward their group centroid. This avoids the random sprawl of a naive force layout and produces spatially meaningful clusters from the first frame.</p>
+        </div>
+
+        <div class="mcard" style="grid-column:1/-1;height:auto;overflow-y:visible;">
+          <h3><span>🔬</span> Community Detection</h3>
+          <p>With Co-links enabled, direct co-author-to-co-author edges are computed from shared papers. The <strong>Louvain algorithm</strong> — a modularity-maximising community detection method — is run on this graph to assign cluster membership, grouping researchers who frequently collaborate with each other into the same colour cluster. With Co-links off, clusters fall back to the primary research topic of shared papers as reported by OpenAlex, keeping colours stable across filter changes.</p>
+        </div>
+
+        <div class="mcard" style="grid-column:1/-1;height:auto;overflow-y:visible;">
+          <h3><span>🛠</span> Tech Stack</h3>
+          <p>Visualisation: <strong>D3.js v7</strong> + <strong>TopoJSON</strong>. Graph layout: custom D3 force simulation with sector seeding and cohesion forces. Community detection: <strong>Louvain</strong> (implemented in JavaScript). Geographic map: <strong>D3 natural-earth projection</strong>.</p>
         </div>
 
       </div>
@@ -2480,6 +2536,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       <div style="text-align:center;font-size:11px;color:var(--muted);border-top:1px solid var(--border);padding-top:10px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;">
         <span>Questions or feedback? <span id="contact-link"></span></span>
         <span>Data source: <a href="https://openalex.org" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">OpenAlex API ↗</a></span>
+        <span>ScholarNet © 2026 by Joe Barnier is licensed under <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">CC BY-NC-ND 4.0 ↗</a></span>
       </div>
     </div>
   </div>
