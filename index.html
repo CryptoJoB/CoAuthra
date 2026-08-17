@@ -164,11 +164,28 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 
 /* ── GEO MAP VIEW ── */
 #geoview{display:none;flex:1;overflow:hidden;background:var(--canvas);position:relative;}
-#geoview svg{width:100%;height:100%;}
+#geo-canvas{position:absolute;inset:0;}
+#geo-canvas svg{width:100%;height:100%;display:block;}
 .geo-tip{background:var(--surface2);border:1px solid var(--border2);padding:6px 9px;
          font-size:11.5px;border-radius:3px;pointer-events:none;position:fixed;
          display:none;z-index:999;line-height:1.7;}
 .geo-tip b{color:var(--accent);display:block;}
+
+/* Geo country search + Funder search (shared visual style) */
+#geo-search-wrap,#funder-search-wrap{position:absolute;top:12px;left:12px;z-index:6;width:230px;}
+#geo-search,#funder-search{width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--text);
+  font-family:'IBM Plex Sans',sans-serif;font-size:12px;padding:6px 9px;outline:none;
+  border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,0.35);transition:border-color .15s;}
+#geo-search:focus,#funder-search:focus{border-color:var(--accent);}
+#geo-search::placeholder,#funder-search::placeholder{color:var(--muted);}
+#geo-search-dropdown,#funder-search-dropdown{margin-top:3px;background:var(--surface);border:1px solid var(--border2);
+  border-radius:5px;box-shadow:0 8px 24px rgba(0,0,0,0.45);overflow-y:auto;max-height:260px;display:none;}
+.geo-search-item{padding:7px 10px;font-size:12px;color:var(--text);cursor:pointer;
+  border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.geo-search-item:last-child{border-bottom:none;}
+.geo-search-item:hover{background:var(--surface2);}
+.geo-search-item .gsi-ct{font-size:10.5px;color:var(--muted);font-family:'IBM Plex Mono',monospace;flex-shrink:0;}
+.geo-search-empty{padding:8px 10px;font-size:11px;color:var(--muted);font-style:italic;}
 
 /* ── PANEL ── */
 #panel{width:275px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);
@@ -258,6 +275,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 .tall-btn{font-size:10px;color:var(--accent);background:none;border:none;cursor:pointer;
           padding:1px 0 5px;display:block;}
 .tall-btn:hover{text-decoration:underline;}
+.tall-btn-row{display:flex;gap:12px;margin-bottom:2px;}
+.tall-btn-row .tall-btn{padding:1px 0 6px;}
+.mini-search{width:100%;background:var(--canvas);border:1px solid var(--border2);color:var(--text);
+  font-family:'IBM Plex Sans',sans-serif;font-size:11px;padding:4px 7px;outline:none;
+  border-radius:3px;margin-bottom:6px;transition:border-color .15s;}
+.mini-search:focus{border-color:var(--accent);}
+.mini-search::placeholder{color:var(--muted);}
 
 /* Collab list */
 #clist{padding:3px 0;flex-shrink:0;}
@@ -340,7 +364,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
   </div>
 
   <div class="sep"></div>
-  <button class="ibtn" id="interbtn" title="Show links between co-authors derived from shared papers" onclick="toggleInterLinks()" style="font-size:10px;font-weight:700;width:auto;padding:0 9px;white-space:nowrap;border-color:rgba(171,71,188,0.9);background:rgba(171,71,188,0.28);color:#e1bee7;gap:4px;display:flex;align-items:center;">★ Co-links</button>
+  <button class="ibtn" id="interbtn" title="Show links between co-authors / co-funders derived from shared papers" onclick="toggleInterLinks()" style="font-size:10px;font-weight:700;width:auto;padding:0 9px;white-space:nowrap;border-color:rgba(171,71,188,0.9);background:rgba(171,71,188,0.28);color:#e1bee7;gap:4px;display:flex;align-items:center;">★ Co-links</button>
   <button class="action-btn" id="share-btn" onclick="sharePermalink()" title="Copy shareable link" disabled>⤴ Share</button>
   <button class="action-btn" id="export-btn" onclick="exportPNG()" title="Save network as PNG" disabled>↓ PNG</button>
   <button class="help-btn" onclick="showModal()" title="Help & About">?</button>
@@ -355,6 +379,12 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       <div style="font-size:2rem;color:var(--border);margin-bottom:8px;">◎</div>
       Search a researcher by name or ORCID<br>to visualize their collaboration network
     </div>
+    <div id="funder-search-wrap" style="display:none;">
+      <input type="text" id="funder-search" placeholder="Search funder…" autocomplete="off"
+             oninput="onFunderSearchInput(this.value)" onkeydown="onFunderSearchKey(event)"
+             onblur="setTimeout(()=>{const d=document.getElementById('funder-search-dropdown');if(d)d.style.display='none';},150)"/>
+      <div id="funder-search-dropdown"></div>
+    </div>
     <svg id="graph"></svg>
     <div id="zbts">
       <button onclick="zBy(1.3)">+</button>
@@ -365,7 +395,15 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
   </div>
 
   <!-- GEO MAP -->
-  <div id="geoview"></div>
+  <div id="geoview">
+    <div id="geo-search-wrap">
+      <input type="text" id="geo-search" placeholder="Search country…" autocomplete="off"
+             oninput="onGeoSearchInput(this.value)" onkeydown="onGeoSearchKey(event)"
+             onblur="setTimeout(()=>{const d=document.getElementById('geo-search-dropdown');if(d)d.style.display='none';},150)"/>
+      <div id="geo-search-dropdown"></div>
+    </div>
+    <div id="geo-canvas"></div>
+  </div>
 
   <!-- LIST VIEW -->
   <div id="listview">
@@ -459,14 +497,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     <!-- Institution filter -->
     <div class="psec" id="inst-sec" style="display:none;">
       <h4>Institution Filter</h4>
-      <button class="tall-btn" id="inst-all-btn" onclick="toggleAllInstitutions(true)">Deselect all</button>
+      <input type="text" id="inst-search" class="mini-search" placeholder="Search institutions…" oninput="filterInstList(this.value)"/>
+      <div class="tall-btn-row">
+        <button class="tall-btn" onclick="toggleAllInstitutions(true)">Select all</button>
+        <button class="tall-btn" onclick="toggleAllInstitutions(false)">Deselect all</button>
+      </div>
       <div id="inst-filters" style="max-height:150px;overflow-y:auto;padding:1px 0;"></div>
     </div>
 
     <!-- Topic cluster filter -->
     <div class="psec" id="csec" style="display:none;">
       <h4>Topic Clusters</h4>
-      <button class="tall-btn" id="tall-btn" onclick="toggleAllClusters(true)">Select all</button>
+      <input type="text" id="cluster-search" class="mini-search" placeholder="Search clusters…" oninput="filterClusterList(this.value)"/>
+      <div class="tall-btn-row">
+        <button class="tall-btn" onclick="toggleAllClusters(true)">Select all</button>
+        <button class="tall-btn" onclick="toggleAllClusters(false)">Deselect all</button>
+      </div>
       <div id="cfilters"></div>
     </div>
 
@@ -494,8 +540,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 // STATE
 // ═══════════════════════════════════════════════════════════════
 let allPapers=[], authorRec=null, coData=[];
-let topicColorMap={}; // topic name → stable cluster index, built once per search
 let geoEnrich={}; // permanent country cache — never wiped by filters
+let topicColorMap={}; // topic name → stable cluster index, built once per search
 let vizMode='network', mainView='graph', searchMode='name';
 let minLinks=5, yearMin=1950, yearMax=2025, labelScale=2.0;
 let maxLinks=1000;
@@ -506,11 +552,17 @@ let enabledClusters=new Set();
 let enabledTypes=new Set(['article','book','book-chapter','preprint','dataset','other']);
 let enabledInstitutions=null; // null = all enabled (before enrichment)
 let knownInstitutions=new Set(); // every institution ever seen — never shrinks
+let instDefaultForNew=true; // whether newly-discovered institutions (from async enrichment) get auto-enabled; set explicitly by Select All / Deselect All, unaffected by individual toggles
+let knownClusters=new Set(); // every cluster id ever seen this search — never shrinks
+let clusterFilterTouched=false; // becomes true once the user manually edits the cluster filter
 let bylineFilterEnabled=false;
 let currentInstId=null; // OpenAlex institution ID for searched author's current institution
 let trendMode='works';
 let geoProjection=null, geoZoomB=null;
 let _worldCache=null;
+let _geoFeatures=null, _geoPath=null, _geoPathSel=null, _geoCountryData=null;
+let _geoSearchMatches=[];
+let instSearchTerm='', clusterSearchTerm='';
 // Inter-collaborator links toggle
 let interLinksEnabled=true;
 
@@ -529,6 +581,93 @@ const OA_COLORS={
   'diamond':'#4fc3f7','gold':'#ffca28','hybrid':'#ff7043',
   'green':'#66bb6a','bronze':'#a1887f','closed':'#565c78'
 };
+
+// Full country name lookup: ISO-3166 numeric (topojson feature id) → {a: alpha-2, n: name}
+const ISO_MAP={
+  4:{a:'AF',n:'Afghanistan'},8:{a:'AL',n:'Albania'},10:{a:'AQ',n:'Antarctica'},12:{a:'DZ',n:'Algeria'},
+  16:{a:'AS',n:'American Samoa'},20:{a:'AD',n:'Andorra'},24:{a:'AO',n:'Angola'},28:{a:'AG',n:'Antigua and Barbuda'},
+  31:{a:'AZ',n:'Azerbaijan'},32:{a:'AR',n:'Argentina'},36:{a:'AU',n:'Australia'},40:{a:'AT',n:'Austria'},
+  44:{a:'BS',n:'Bahamas'},48:{a:'BH',n:'Bahrain'},50:{a:'BD',n:'Bangladesh'},51:{a:'AM',n:'Armenia'},
+  52:{a:'BB',n:'Barbados'},56:{a:'BE',n:'Belgium'},60:{a:'BM',n:'Bermuda'},64:{a:'BT',n:'Bhutan'},
+  68:{a:'BO',n:'Bolivia'},70:{a:'BA',n:'Bosnia and Herzegovina'},72:{a:'BW',n:'Botswana'},74:{a:'BV',n:'Bouvet Island'},
+  76:{a:'BR',n:'Brazil'},84:{a:'BZ',n:'Belize'},86:{a:'IO',n:'British Indian Ocean Territory'},90:{a:'SB',n:'Solomon Islands'},
+  92:{a:'VG',n:'British Virgin Islands'},96:{a:'BN',n:'Brunei'},100:{a:'BG',n:'Bulgaria'},104:{a:'MM',n:'Myanmar'},
+  108:{a:'BI',n:'Burundi'},112:{a:'BY',n:'Belarus'},116:{a:'KH',n:'Cambodia'},120:{a:'CM',n:'Cameroon'},
+  124:{a:'CA',n:'Canada'},132:{a:'CV',n:'Cabo Verde'},136:{a:'KY',n:'Cayman Islands'},140:{a:'CF',n:'Central African Republic'},
+  144:{a:'LK',n:'Sri Lanka'},148:{a:'TD',n:'Chad'},152:{a:'CL',n:'Chile'},156:{a:'CN',n:'China'},
+  158:{a:'TW',n:'Taiwan'},162:{a:'CX',n:'Christmas Island'},166:{a:'CC',n:'Cocos'},170:{a:'CO',n:'Colombia'},
+  174:{a:'KM',n:'Comoros'},175:{a:'YT',n:'Mayotte'},178:{a:'CG',n:'Congo'},180:{a:'CD',n:'DR Congo'},
+  184:{a:'CK',n:'Cook Islands'},188:{a:'CR',n:'Costa Rica'},191:{a:'HR',n:'Croatia'},192:{a:'CU',n:'Cuba'},
+  196:{a:'CY',n:'Cyprus'},203:{a:'CZ',n:'Czech Republic'},204:{a:'BJ',n:'Benin'},208:{a:'DK',n:'Denmark'},
+  212:{a:'DM',n:'Dominica'},214:{a:'DO',n:'Dominican Republic'},218:{a:'EC',n:'Ecuador'},222:{a:'SV',n:'El Salvador'},
+  226:{a:'GQ',n:'Equatorial Guinea'},231:{a:'ET',n:'Ethiopia'},232:{a:'ER',n:'Eritrea'},233:{a:'EE',n:'Estonia'},
+  234:{a:'FO',n:'Faroe Islands'},238:{a:'FK',n:'Falkland Islands'},239:{a:'GS',n:'South Georgia and the South Sandwich Islands'},242:{a:'FJ',n:'Fiji'},
+  246:{a:'FI',n:'Finland'},248:{a:'AX',n:'Åland Islands'},250:{a:'FR',n:'France'},254:{a:'GF',n:'French Guiana'},
+  258:{a:'PF',n:'French Polynesia'},260:{a:'TF',n:'French Southern Territories'},262:{a:'DJ',n:'Djibouti'},266:{a:'GA',n:'Gabon'},
+  268:{a:'GE',n:'Georgia'},270:{a:'GM',n:'Gambia'},275:{a:'PS',n:'Palestine'},276:{a:'DE',n:'Germany'},
+  288:{a:'GH',n:'Ghana'},292:{a:'GI',n:'Gibraltar'},296:{a:'KI',n:'Kiribati'},300:{a:'GR',n:'Greece'},
+  304:{a:'GL',n:'Greenland'},308:{a:'GD',n:'Grenada'},312:{a:'GP',n:'Guadeloupe'},316:{a:'GU',n:'Guam'},
+  320:{a:'GT',n:'Guatemala'},324:{a:'GN',n:'Guinea'},328:{a:'GY',n:'Guyana'},332:{a:'HT',n:'Haiti'},
+  334:{a:'HM',n:'Heard Island and McDonald Islands'},336:{a:'VA',n:'Vatican City'},340:{a:'HN',n:'Honduras'},344:{a:'HK',n:'Hong Kong'},
+  348:{a:'HU',n:'Hungary'},352:{a:'IS',n:'Iceland'},356:{a:'IN',n:'India'},360:{a:'ID',n:'Indonesia'},
+  364:{a:'IR',n:'Iran'},368:{a:'IQ',n:'Iraq'},372:{a:'IE',n:'Ireland'},376:{a:'IL',n:'Israel'},
+  380:{a:'IT',n:'Italy'},384:{a:'CI',n:'Ivory Coast'},388:{a:'JM',n:'Jamaica'},392:{a:'JP',n:'Japan'},
+  398:{a:'KZ',n:'Kazakhstan'},400:{a:'JO',n:'Jordan'},404:{a:'KE',n:'Kenya'},408:{a:'KP',n:'North Korea'},
+  410:{a:'KR',n:'South Korea'},414:{a:'KW',n:'Kuwait'},417:{a:'KG',n:'Kyrgyzstan'},418:{a:'LA',n:'Laos'},
+  422:{a:'LB',n:'Lebanon'},426:{a:'LS',n:'Lesotho'},428:{a:'LV',n:'Latvia'},430:{a:'LR',n:'Liberia'},
+  434:{a:'LY',n:'Libya'},438:{a:'LI',n:'Liechtenstein'},440:{a:'LT',n:'Lithuania'},442:{a:'LU',n:'Luxembourg'},
+  446:{a:'MO',n:'Macao'},450:{a:'MG',n:'Madagascar'},454:{a:'MW',n:'Malawi'},458:{a:'MY',n:'Malaysia'},
+  462:{a:'MV',n:'Maldives'},466:{a:'ML',n:'Mali'},470:{a:'MT',n:'Malta'},474:{a:'MQ',n:'Martinique'},
+  478:{a:'MR',n:'Mauritania'},480:{a:'MU',n:'Mauritius'},484:{a:'MX',n:'Mexico'},492:{a:'MC',n:'Monaco'},
+  496:{a:'MN',n:'Mongolia'},498:{a:'MD',n:'Moldova'},499:{a:'ME',n:'Montenegro'},500:{a:'MS',n:'Montserrat'},
+  504:{a:'MA',n:'Morocco'},508:{a:'MZ',n:'Mozambique'},512:{a:'OM',n:'Oman'},516:{a:'NA',n:'Namibia'},
+  520:{a:'NR',n:'Nauru'},524:{a:'NP',n:'Nepal'},528:{a:'NL',n:'Netherlands'},531:{a:'CW',n:'Curaçao'},
+  533:{a:'AW',n:'Aruba'},534:{a:'SX',n:'Sint Maarten'},535:{a:'BQ',n:'Bonaire'},540:{a:'NC',n:'New Caledonia'},
+  548:{a:'VU',n:'Vanuatu'},554:{a:'NZ',n:'New Zealand'},558:{a:'NI',n:'Nicaragua'},562:{a:'NE',n:'Niger'},
+  566:{a:'NG',n:'Nigeria'},570:{a:'NU',n:'Niue'},574:{a:'NF',n:'Norfolk Island'},578:{a:'NO',n:'Norway'},
+  580:{a:'MP',n:'Northern Mariana Islands'},581:{a:'UM',n:'United States Minor Outlying Islands'},583:{a:'FM',n:'Micronesia'},584:{a:'MH',n:'Marshall Islands'},
+  585:{a:'PW',n:'Palau'},586:{a:'PK',n:'Pakistan'},591:{a:'PA',n:'Panama'},598:{a:'PG',n:'Papua New Guinea'},
+  600:{a:'PY',n:'Paraguay'},604:{a:'PE',n:'Peru'},608:{a:'PH',n:'Philippines'},612:{a:'PN',n:'Pitcairn'},
+  616:{a:'PL',n:'Poland'},620:{a:'PT',n:'Portugal'},624:{a:'GW',n:'Guinea-Bissau'},626:{a:'TL',n:'Timor-Leste'},
+  630:{a:'PR',n:'Puerto Rico'},634:{a:'QA',n:'Qatar'},638:{a:'RE',n:'Réunion'},642:{a:'RO',n:'Romania'},
+  643:{a:'RU',n:'Russia'},646:{a:'RW',n:'Rwanda'},652:{a:'BL',n:'Saint Barthélemy'},654:{a:'SH',n:'Saint Helena'},
+  659:{a:'KN',n:'Saint Kitts and Nevis'},660:{a:'AI',n:'Anguilla'},662:{a:'LC',n:'Saint Lucia'},663:{a:'MF',n:'Saint Martin'},
+  666:{a:'PM',n:'Saint Pierre and Miquelon'},670:{a:'VC',n:'Saint Vincent and the Grenadines'},674:{a:'SM',n:'San Marino'},678:{a:'ST',n:'Sao Tome and Principe'},
+  682:{a:'SA',n:'Saudi Arabia'},686:{a:'SN',n:'Senegal'},688:{a:'RS',n:'Serbia'},690:{a:'SC',n:'Seychelles'},
+  694:{a:'SL',n:'Sierra Leone'},702:{a:'SG',n:'Singapore'},703:{a:'SK',n:'Slovakia'},704:{a:'VN',n:'Vietnam'},
+  705:{a:'SI',n:'Slovenia'},706:{a:'SO',n:'Somalia'},710:{a:'ZA',n:'South Africa'},716:{a:'ZW',n:'Zimbabwe'},
+  724:{a:'ES',n:'Spain'},728:{a:'SS',n:'South Sudan'},729:{a:'SD',n:'Sudan'},732:{a:'EH',n:'Western Sahara'},
+  740:{a:'SR',n:'Suriname'},744:{a:'SJ',n:'Svalbard and Jan Mayen'},748:{a:'SZ',n:'Eswatini'},752:{a:'SE',n:'Sweden'},
+  756:{a:'CH',n:'Switzerland'},760:{a:'SY',n:'Syria'},762:{a:'TJ',n:'Tajikistan'},764:{a:'TH',n:'Thailand'},
+  768:{a:'TG',n:'Togo'},772:{a:'TK',n:'Tokelau'},776:{a:'TO',n:'Tonga'},780:{a:'TT',n:'Trinidad and Tobago'},
+  784:{a:'AE',n:'United Arab Emirates'},788:{a:'TN',n:'Tunisia'},792:{a:'TR',n:'Turkey'},795:{a:'TM',n:'Turkmenistan'},
+  796:{a:'TC',n:'Turks and Caicos Islands'},798:{a:'TV',n:'Tuvalu'},800:{a:'UG',n:'Uganda'},804:{a:'UA',n:'Ukraine'},
+  807:{a:'MK',n:'North Macedonia'},818:{a:'EG',n:'Egypt'},826:{a:'GB',n:'United Kingdom'},831:{a:'GG',n:'Guernsey'},
+  832:{a:'JE',n:'Jersey'},833:{a:'IM',n:'Isle of Man'},834:{a:'TZ',n:'Tanzania'},840:{a:'US',n:'United States'},
+  850:{a:'VI',n:'U.S. Virgin Islands'},854:{a:'BF',n:'Burkina Faso'},858:{a:'UY',n:'Uruguay'},860:{a:'UZ',n:'Uzbekistan'},
+  862:{a:'VE',n:'Venezuela'},876:{a:'WF',n:'Wallis and Futuna'},882:{a:'WS',n:'Samoa'},887:{a:'YE',n:'Yemen'},
+  894:{a:'ZM',n:'Zambia'}
+};
+// Reverse lookup: alpha-2 → {id: numeric topojson id, n: name}
+const ISO_BY_ALPHA={};
+Object.entries(ISO_MAP).forEach(([id,info])=>{ISO_BY_ALPHA[info.a]={id:+id,n:info.n};});
+
+// Fixed, evenly-spaced colour index per country (assigned once, in ISO numeric
+// order, which has no relation to geographic adjacency). Using a permanent
+// index rather than a hash means colours are perfectly spread via the golden
+// angle AND stay stable no matter which subset of countries is on screen.
+const COUNTRY_COLOR_INDEX={};
+Object.keys(ISO_MAP).map(Number).sort((a,b)=>a-b).forEach((id,i)=>{COUNTRY_COLOR_INDEX[ISO_MAP[id].a]=i;});
+
+function countryFillColor(cc){
+  const i=COUNTRY_COLOR_INDEX[cc]??0;
+  const hue=(i*137.508)%360;
+  // Cycle through a few saturation/lightness tiers alongside the hue so that
+  // even hues which land close together stay visually distinguishable.
+  const sat=[80,64,72][i%3];
+  const lt=dark?[62,50,72][i%3]:[36,48,28][i%3];
+  return `hsl(${hue.toFixed(1)},${sat}%,${lt}%)`;
+}
 
 // ═══════════════════════════════════════════════════════════════
 // SEARCH MODE
@@ -557,6 +696,13 @@ function setViz(m){
   document.getElementById('tg').classList.add('on');
   document.getElementById('tl').classList.remove('on');
   mainView='graph';
+  // Funder search bar only makes sense on the funders tab
+  const fsw=document.getElementById('funder-search-wrap');
+  if(m!=='funders'&&fsw){
+    fsw.style.display='none';
+    const dd=document.getElementById('funder-search-dropdown');
+    if(dd) dd.style.display='none';
+  }
   // Auto-sync trend chart: citations view → citations chart, network → publications chart
   if(m==='citations' && trendMode==='works'){
     trendMode='citations';
@@ -585,8 +731,8 @@ function updateVLegend(){
   const m={
     network:`<b>Network</b>Node size = shared papers<br>Link weight = fractional strength${interLinksEnabled?'<br><span style="color:rgba(171,71,188,0.9)">— — —</span> co-author links':''}`,
     citations:`<b>Citations</b>Node size = co-author total citations<br>Link colour = strength intensity${interLinksEnabled?'<br><span style="color:rgba(171,71,188,0.9)">— — —</span> co-author links':''}`,
-    funders:'<b>Funders</b>Nodes = funding agencies<br>Size = papers funded',
-    geo:'<b>Geographic Map</b>Country colour = collaboration intensity'
+    funders:`<b>Funders</b>Nodes = funding agencies<br>Size = papers funded${interLinksEnabled?'<br><span style="color:rgba(171,71,188,0.9)">— — —</span> co-funder links':''}`,
+    geo:'<b>Geographic Map</b>Colour = country · Opacity = collaboration volume'
   };
   el.innerHTML=m[vizMode]||'';
   el.style.display=(coData.length&&vizMode!=='geo')?'block':'none';
@@ -823,6 +969,7 @@ async function loadAuthor(rec){
   showStatus('<div class="ring"></div>Loading publications…');
   document.getElementById('graph').innerHTML='';
   allPapers=[]; coData=[]; geoEnrich={}; _worldCache=null; enabledInstitutions=null; knownInstitutions=new Set(); topicColorMap={};
+  instDefaultForNew=true; knownClusters=new Set(); clusterFilterTouched=false;
   bylineFilterEnabled=false; currentInstId=null;
 
   const authorId=authorRec.id.replace('https://openalex.org/','');
@@ -882,8 +1029,9 @@ async function loadAuthor(rec){
   document.getElementById('share-btn').disabled=false;
   document.getElementById('export-btn').disabled=false;
   // Update URL so current author is permalinkable without pushing a new history entry
+  // (skipped/guarded for file:// pages — the History API can't target file: URLs)
   const aid=authorRec.id.replace('https://openalex.org/','');
-  history.replaceState(null,'',`?author=${aid}`);
+  try{ history.replaceState(null,'',`?author=${aid}`); }catch(e){/* not supported on file:// */}
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1020,7 +1168,21 @@ function buildCoData(){
     sl.value=1; minLinks=1; document.getElementById('ml-v').textContent=1;
   }
 
-  enabledClusters=new Set(coData.map(c=>c.cluster));
+  // Preserve any manual cluster selection across rebuilds triggered by other
+  // filters (year/type/byline changing calls buildCoData too) — only newly
+  // discovered clusters get auto-enabled once the user has taken manual control.
+  const clustersNow=new Set(coData.map(c=>c.cluster));
+  if(!clusterFilterTouched){
+    enabledClusters=clustersNow;
+    knownClusters=new Set(clustersNow);
+  } else {
+    clustersNow.forEach(cl=>{
+      if(!knownClusters.has(cl)){
+        knownClusters.add(cl);
+        enabledClusters.add(cl);
+      }
+    });
+  }
 }
 
 function getFilteredPapers(){
@@ -1162,8 +1324,8 @@ function updateStats(){
     <div class="srow"><span class="slbl">Total publications</span><span class="sval">${(authorRec.works_count||allPapers.length).toLocaleString()}</span></div>
     <div class="srow"><span class="slbl">${isFiltered?'Filtered papers':'Loaded papers'}</span><span class="sval" style="${isFiltered?'color:var(--yellow)':''}">${basePapers.length.toLocaleString()}${isFiltered?` / ${allPapers.length}`:''}</span></div>
     <div class="srow"><span class="slbl">${isFiltered?'Filtered citations':'Total citations'}</span><span class="sval" style="${isFiltered?'color:var(--yellow)':''}">${isFiltered?filteredCites.toLocaleString():(authorRec.cited_by_count||0).toLocaleString()}</span></div>
-    <div class="srow"><span class="slbl">Unique co-authors</span><span class="sval">${totalVisible}</span></div>
-    <div class="srow"><span class="slbl">Shown (≥${minLinks} papers)</span><span class="sval">${vis}</span></div>
+    <div class="srow"><span class="slbl">Unique co-authors</span><span class="sval" style="color:#ab47bc">${totalVisible}</span></div>
+    <div class="srow"><span class="slbl">Co-authors in map (≥${minLinks} papers)</span><span class="sval" style="color:#ab47bc">${vis}</span></div>
   `;
 }
 
@@ -1317,30 +1479,41 @@ function buildClusterFilters(){
     if(!cm[c.cluster]) cm[c.cluster]={count:0,color:COLORS[c.cluster%COLORS.length],name:window._cn?.[c.cluster]||`Cluster ${c.cluster+1}`};
     cm[c.cluster].count++;
   });
-  const cls=Object.entries(cm).sort((a,b)=>b[1].count-a[1].count);
+  const cls=Object.entries(cm).sort((a,b)=>a[1].name.localeCompare(b[1].name));
   document.getElementById('cfilters').innerHTML=cls.map(([id,inf])=>`
-    <label class="cfi">
-      <input type="checkbox" checked data-cluster="${id}" onchange="onCFToggle()"/>
+    <label class="cfi" data-name="${inf.name.toLowerCase()}">
+      <input type="checkbox" ${enabledClusters.has(+id)?'checked':''} data-cluster="${id}" onchange="onCFToggle()"/>
       <span class="cfi-dot" style="background:${inf.color}"></span>
       <span class="cfi-lbl" title="${inf.name}">${inf.name.length>26?inf.name.slice(0,24)+'…':inf.name}</span>
       <span class="cfi-ct">${inf.count}</span>
     </label>
   `).join('');
   document.getElementById('csec').style.display='block';
+  applyClusterSearchFilter();
+}
+
+function filterClusterList(v){
+  clusterSearchTerm=v.trim().toLowerCase();
+  applyClusterSearchFilter();
+}
+function applyClusterSearchFilter(){
+  document.querySelectorAll('#cfilters .cfi').forEach(el=>{
+    const name=el.dataset.name||'';
+    el.style.display=(!clusterSearchTerm||name.includes(clusterSearchTerm))?'':'none';
+  });
 }
 
 function onCFToggle(){
+  clusterFilterTouched=true;
   enabledClusters=new Set([...document.querySelectorAll('#cfilters input:checked')].map(el=>+el.dataset.cluster));
   updateStats(); buildSidebar(false); buildListData(); drawTrendChart(); buildOABar(); redraw(); fetchMissingCitations();
 }
 
 function toggleAllClusters(state){
+  clusterFilterTouched=true;
   document.querySelectorAll('#cfilters input').forEach(el=>el.checked=state);
   enabledClusters=state?new Set(coData.map(c=>c.cluster)):new Set();
-  const btn=document.getElementById('tall-btn');
-  btn.textContent=state?'Deselect all':'Select all';
-  btn.onclick=()=>toggleAllClusters(!state);
-  updateStats(); buildSidebar(false); redraw();
+  updateStats(); buildSidebar(false); buildListData(); drawTrendChart(); buildOABar(); redraw(); fetchMissingCitations();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1355,12 +1528,18 @@ function buildInstitutionFilter(){
     if(c.institution) instCounts[c.institution]=(instCounts[c.institution]||0)+1;
     else unknownCount++;
   });
-  const insts=Object.entries(instCounts).sort((a,b)=>b[1]-a[1]);
+  const insts=Object.entries(instCounts).sort((a,b)=>a[0].localeCompare(b[0]));
   if(!insts.length&&!unknownCount){document.getElementById('inst-sec').style.display='none';return;}
 
   // First build: initialise both sets from scratch.
   // Subsequent builds (from fetchMissingCitations etc.): only auto-enable
-  // institutions that are genuinely new — never re-add ones the user deselected.
+  // institutions that are genuinely new, and only according to whatever
+  // Select All / Deselect All last set as the default for new arrivals
+  // (instDefaultForNew) — individual per-item toggles don't change this,
+  // since checking/unchecking one institution says nothing about what
+  // should happen to institutions discovered afterward. This is what makes
+  // "Select All" behave correctly even while enrichment is still in flight:
+  // anything resolved moments later still gets included.
   if(!enabledInstitutions){
     enabledInstitutions=new Set(insts.map(([n])=>n));
     enabledInstitutions.add(UNKNOWN_INST);
@@ -1369,26 +1548,25 @@ function buildInstitutionFilter(){
   } else {
     insts.forEach(([n])=>{
       if(!knownInstitutions.has(n)){
-        // Truly new institution — auto-enable it
-        enabledInstitutions.add(n);
         knownInstitutions.add(n);
+        if(instDefaultForNew) enabledInstitutions.add(n);
       }
     });
     if(!knownInstitutions.has(UNKNOWN_INST)){
-      enabledInstitutions.add(UNKNOWN_INST);
       knownInstitutions.add(UNKNOWN_INST);
+      if(instDefaultForNew) enabledInstitutions.add(UNKNOWN_INST);
     }
   }
 
   const knownRows=insts.map(([name,ct])=>`
-    <label class="cfi">
+    <label class="cfi" data-name="${name.toLowerCase()}">
       <input type="checkbox" ${enabledInstitutions.has(name)?'checked':''} data-inst="${encodeURIComponent(name)}" onchange="onInstToggle()"/>
       <span class="cfi-lbl" title="${name}">${name.length>26?name.slice(0,24)+'…':name}</span>
       <span class="cfi-ct">${ct}</span>
     </label>`).join('');
 
   const unknownRow=unknownCount?`
-    <label class="cfi" style="border-top:1px solid var(--border);margin-top:3px;padding-top:4px;">
+    <label class="cfi" data-name="unknown" style="border-top:1px solid var(--border);margin-top:3px;padding-top:4px;">
       <input type="checkbox" ${enabledInstitutions.has(UNKNOWN_INST)?'checked':''} data-inst="${UNKNOWN_INST}" onchange="onInstToggle()"/>
       <span class="cfi-lbl" style="color:var(--muted);font-style:italic;">Unknown / None</span>
       <span class="cfi-ct">${unknownCount}</span>
@@ -1396,23 +1574,34 @@ function buildInstitutionFilter(){
 
   document.getElementById('inst-filters').innerHTML=knownRows+unknownRow;
   document.getElementById('inst-sec').style.display='block';
+  applyInstSearchFilter();
+}
+
+function filterInstList(v){
+  instSearchTerm=v.trim().toLowerCase();
+  applyInstSearchFilter();
+}
+function applyInstSearchFilter(){
+  document.querySelectorAll('#inst-filters .cfi').forEach(el=>{
+    const name=el.dataset.name||'';
+    el.style.display=(!instSearchTerm||name.includes(instSearchTerm))?'':'none';
+  });
 }
 
 function onInstToggle(){
+  // Individual toggle — doesn't change the default for institutions discovered later
   enabledInstitutions=new Set(
     [...document.querySelectorAll('#inst-filters input:checked')].map(el=>decodeURIComponent(el.dataset.inst))
   );
-  updateStats(); buildSidebar(false); buildListData(); drawTrendChart(); buildOABar(); redraw();
+  updateStats(); buildSidebar(false); buildListData(); drawTrendChart(); buildOABar(); redraw(); fetchMissingCitations();
 }
 
 function toggleAllInstitutions(state){
+  instDefaultForNew=state; // Select All / Deselect All also sets what happens to institutions discovered afterward
   document.querySelectorAll('#inst-filters input').forEach(el=>el.checked=state);
   const allInsts=[...document.querySelectorAll('#inst-filters input')].map(el=>decodeURIComponent(el.dataset.inst));
   enabledInstitutions=state?new Set(allInsts):new Set();
-  const btn=document.getElementById('inst-all-btn');
-  btn.textContent=state?'Deselect all':'Select all';
-  btn.onclick=()=>toggleAllInstitutions(!state);
-  updateStats(); buildSidebar(false); buildListData(); drawTrendChart(); buildOABar(); redraw();
+  updateStats(); buildSidebar(false); buildListData(); drawTrendChart(); buildOABar(); redraw(); fetchMissingCitations();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1854,6 +2043,7 @@ function drawNetwork(coauthors){
         if(n>0) h+=`<div class="tr">Co-author connections: <span class="tv" style="color:rgba(171,71,188,0.9)">${n}</span></div>`;
       }
       h+=`<div class="tr">Cluster: <span class="tv" style="color:${COLORS[d.cluster%COLORS.length]}">${window._cn?.[d.cluster]||`Cluster ${d.cluster+1}`}</span></div>`;
+      h+=`<div class="tr" style="color:var(--muted);font-size:9.5px;font-family:'IBM Plex Mono',monospace;margin-top:2px;">${d.id.replace('https://openalex.org/','')}</div>`;
       h+=`<div class="tr" style="margin-top:3px;color:var(--muted);font-size:10px">Click to highlight · Right-click for OpenAlex ↗</div>`;
     } else {
       const {institution:inst,country}=bestInstitution(authorRec);
@@ -1914,23 +2104,52 @@ function drawNetwork(coauthors){
 // ═══════════════════════════════════════════════════════════════
 // FUNDER NETWORK
 // ═══════════════════════════════════════════════════════════════
+// Current funder node list (with live x/y from the force sim) — used by search
+let _funderList=[];
+
+// Build A↔B edges between funders that co-fund the same paper (mirrors
+// buildInterLinks for co-authors). Only pairs where both are in the
+// currently-displayed funder set are included.
+function buildFunderInterLinks(papers,visibleNames){
+  const vis=visibleNames;
+  const pairMap={};
+  papers.forEach(p=>{
+    const awards=p.awards||p.grants||[];
+    const namesOnPaper=[...new Set(awards.map(aw=>aw.funder_display_name||aw.funder).filter(Boolean))]
+      .filter(n=>vis.has(n));
+    if(namesOnPaper.length<2) return;
+    const frac=1/Math.max(1,namesOnPaper.length-1);
+    for(let i=0;i<namesOnPaper.length;i++){
+      for(let j=i+1;j<namesOnPaper.length;j++){
+        const a=namesOnPaper[i], b=namesOnPaper[j];
+        const key=a<b?`${a}|||${b}`:`${b}|||${a}`;
+        if(!pairMap[key]) pairMap[key]={source:a,target:b,count:0,strength:0,isInter:true};
+        pairMap[key].count++;
+        pairMap[key].strength+=frac;
+      }
+    }
+  });
+  return Object.values(pairMap);
+}
+
 function drawFunders(){
   const svg=d3.select('#graph');
   svg.selectAll('*').remove();
   const W=document.getElementById('cvs').clientWidth;
   const H=document.getElementById('cvs').clientHeight;
+  const fsw=document.getElementById('funder-search-wrap');
 
   // Aggregate funders from awards field — respects all active filters
   const fmap={};
-  const mainId=authorRec?.id;
-  getClusterFilteredPapers().forEach(p=>{
+  const filteredPapers=getClusterFilteredPapers();
+  filteredPapers.forEach(p=>{
     const awards=p.awards||p.grants||[];
     awards.forEach(aw=>{
       const fn=aw.funder_display_name||aw.funder;
       if(!fn) return;
-      if(!fmap[fn]) fmap[fn]={name:fn,count:0,papers:[]};
+      if(!fmap[fn]) fmap[fn]={name:fn,count:0,awardIds:new Set()};
       fmap[fn].count++;
-      if(p.title) fmap[fn].papers.push(p.title.slice(0,60));
+      if(aw.award_id) fmap[fn].awardIds.add(aw.award_id);
     });
   });
 
@@ -1938,40 +2157,168 @@ function drawFunders(){
 
   if(!funders.length){
     showStatus('<span style="color:var(--muted)">No funder data found in these publications.<br><span style="font-size:11px">OpenAlex funding coverage varies by field and era.</span></span>');
+    if(fsw) fsw.style.display='none';
     return;
   }
 
   hideStatus();
+  if(fsw) fsw.style.display='block';
   const maxC=funders[0]?.count||1;
   const rSc=d3.scaleSqrt().domain([1,maxC]).range([6,38]).clamp(true);
 
   const ctr={id:'_main',label:authorRec.display_name,type:'center',r:22};
   const funderSlice=funders.slice(0,Math.min(60,maxLinks));
-  const nodes=[ctr,...funderSlice.map((f,i)=>({
-    id:f.name,label:f.name,type:'funder',r:rSc(f.count),count:f.count,papers:f.papers
-  }))];
-  const links=funderSlice.map(f=>({source:'_main',target:f.name,count:f.count}));
-  const maxL=d3.max(links,d=>d.count)||1;
+  const funderNodes=funderSlice.map(f=>({
+    id:f.name,label:f.name,type:'funder',r:rSc(f.count),count:f.count,
+    awardCount:f.awardIds.size
+  }));
+  const nodes=[ctr,...funderNodes];
+  _funderList=funderNodes;
+
+  const starLinks=funderSlice.map(f=>({source:'_main',target:f.name,count:f.count,strength:f.count,isInter:false}));
+  const funderNames=new Set(funderSlice.map(f=>f.name));
+  const interLinks=interLinksEnabled?buildFunderInterLinks(filteredPapers,funderNames):[];
+
+  // ── Cap total links to maxLinks (keep strongest first) — same budget split as the network view ──
+  let cappedStar=[...starLinks].sort((a,b)=>b.count-a.count);
+  let cappedInter=[...interLinks].sort((a,b)=>b.strength-a.strength);
+  if(interLinksEnabled&&interLinks.length){
+    const interBudget=Math.min(cappedInter.length,Math.floor(maxLinks*0.65));
+    const starBudget=Math.min(cappedStar.length,maxLinks-interBudget);
+    cappedInter=cappedInter.slice(0,interBudget);
+    cappedStar=cappedStar.slice(0,starBudget);
+  } else {
+    cappedStar=cappedStar.slice(0,maxLinks);
+    cappedInter=[];
+  }
+
+  const maxL=d3.max(cappedStar,d=>d.count)||1;
+  const maxInterS=cappedInter.length?d3.max(cappedInter,d=>d.strength)||1:1;
+  const links=[...cappedStar,...cappedInter];
+
+  // ── Cluster assignments (same approach as the network view) ──
+  // Co-links on: Louvain community detection on the co-funder edges.
+  // Co-links off: everything in a single cluster (plain radial layout).
+  let clusterMap={};
+  let numClusters=1;
+  if(interLinksEnabled&&cappedInter.length){
+    const nodeIds=funderNodes.map(f=>f.id);
+    const commMap=louvain(nodeIds,cappedInter);
+    numClusters=Math.max(...Object.values(commMap))+1;
+    funderNodes.forEach(n=>{clusterMap[n.id]=commMap[n.id]??0;});
+  } else {
+    funderNodes.forEach(n=>{clusterMap[n.id]=0;});
+  }
+
+  // ── Pre-position: place each cluster in its own sector so the sim only
+  // needs to refine, not fight random starting positions ──
+  const R=Math.min(W,H)*0.32;
+  const clusterCounts={};
+  funderNodes.forEach(n=>{const c=clusterMap[n.id];clusterCounts[c]=(clusterCounts[c]||0)+1;});
+  const clusterIdx={};
+  funderNodes.forEach(n=>{
+    const c=clusterMap[n.id];
+    if(!clusterIdx[c]) clusterIdx[c]=0;
+    const totalInCluster=clusterCounts[c];
+    const posInCluster=clusterIdx[c]++;
+    const sectorAngle=(c/numClusters)*2*Math.PI-Math.PI/2;
+    const sectorWidth=(2*Math.PI/numClusters)*0.75;
+    const spread=totalInCluster>1?(posInCluster/(totalInCluster-1)-0.5)*sectorWidth:0;
+    const angle=sectorAngle+spread;
+    const r=R*(0.7+0.5*(posInCluster/Math.max(totalInCluster-1,1)));
+    n.x=W/2+Math.cos(angle)*r;
+    n.y=H/2+Math.sin(angle)*r;
+  });
+  ctr.x=W/2; ctr.y=H/2;
+
+  // ── Cluster centroid attraction force ──
+  const clusterForceStrength=Math.min(0.12,0.04*Math.sqrt(numClusters));
+  function clusterForce(alpha){
+    const cx={},cy={},cn={};
+    funderNodes.forEach(n=>{
+      const c=clusterMap[n.id];
+      cx[c]=(cx[c]||0)+n.x; cy[c]=(cy[c]||0)+n.y; cn[c]=(cn[c]||0)+1;
+    });
+    funderNodes.forEach(n=>{
+      const c=clusterMap[n.id];
+      const mx=cx[c]/cn[c], my=cy[c]/cn[c];
+      n.vx+=(mx-n.x)*clusterForceStrength*alpha;
+      n.vy+=(my-n.y)*clusterForceStrength*alpha;
+    });
+  }
+
+  // ── Degree count (for FA2-style repulsion scaling) ──
+  const degMap={};
+  nodes.forEach(n=>degMap[n.id]=0);
+  links.forEach(l=>{
+    const s=l.source?.id||l.source;
+    const t=l.target?.id||l.target;
+    if(s in degMap) degMap[s]++;
+    if(t in degMap) degMap[t]++;
+  });
 
   if(sim) sim.stop();
-  sim=d3.forceSimulation(nodes)
-    .force('link',d3.forceLink(links).id(d=>d.id)
-      .distance(d=>80+160*(1-d.count/maxL)).strength(0.4))
-    .force('charge',d3.forceManyBody().strength(d=>d.type==='center'?-1200:-80-d.r*2))
-    .force('center',d3.forceCenter(W/2,H/2))
-    .force('collision',d3.forceCollide().radius(d=>d.r+6));
+
+  if(interLinksEnabled&&cappedInter.length){
+    sim=d3.forceSimulation(nodes)
+      .alphaDecay(0.04)
+      .velocityDecay(0.6)
+      .force('link',d3.forceLink(links).id(d=>d.id)
+        .distance(d=>d.isInter
+          ? 40+80*(1-Math.min(d.strength/maxInterS,1))
+          : 160+100*(1-d.count/maxL))
+        .strength(d=>d.isInter
+          ? 0.18+0.25*(d.strength/maxInterS)
+          : 0.01+0.03*(d.count/maxL)))
+      .force('charge',d3.forceManyBody()
+        .strength(d=>{
+          const k=degMap[d.id]||1;
+          return d.type==='center'?-3400:-(260+k*140+d.r*18);
+        })
+        .distanceMax(700))
+      .force('cluster',clusterForce)
+      .force('center',d3.forceCenter(W/2,H/2).strength(0.03))
+      .force('collision',d3.forceCollide()
+        .radius(d=>d.r+34)
+        .strength(0.9)
+        .iterations(4));
+  } else {
+    sim=d3.forceSimulation(nodes)
+      .alphaDecay(0.04)
+      .velocityDecay(0.55)
+      .force('link',d3.forceLink(links).id(d=>d.id)
+        .distance(d=>80+160*(1-d.count/maxL))
+        .strength(0.4))
+      .force('charge',d3.forceManyBody()
+        .strength(d=>d.type==='center'?-2200:-140-d.r*6)
+        .distanceMax(900))
+      .force('cluster',clusterForce)
+      .force('center',d3.forceCenter(W/2,H/2).strength(0.04))
+      .force('collision',d3.forceCollide().radius(d=>d.r+26).strength(0.75).iterations(3));
+  }
+
+  // Pre-compute layout silently — nodes appear in settled positions from the first frame
+  sim.tick(200);
 
   zoomB=d3.zoom().scaleExtent([0.04,10]).on('zoom',e=>g.attr('transform',e.transform));
   svg.call(zoomB); svgSel=svg;
   const g=svg.append('g');
 
   const lnk=g.append('g').attr('class','links').selectAll('line').data(links).join('line')
-    .attr('stroke',dark?'rgba(255,202,40,0.25)':'rgba(180,140,0,0.2)')
-    .attr('stroke-width',d=>0.5+(d.count/maxL)*4)
-    .attr('stroke-opacity',d=>0.1+(d.count/maxL)*0.7);
+    .attr('stroke',d=>{
+      if(d.isInter) return dark?'rgba(171,71,188,0.85)':'rgba(106,27,154,0.65)';
+      return dark?'rgba(255,202,40,0.25)':'rgba(180,140,0,0.2)';
+    })
+    .attr('stroke-width',d=>d.isInter
+      ? 0.8+(d.strength/maxInterS)*2.5
+      : 0.5+(d.count/maxL)*4)
+    .attr('stroke-opacity',d=>d.isInter
+      ? 0.45+(d.strength/maxInterS)*0.5
+      : 0.1+(d.count/maxL)*0.7)
+    .attr('stroke-dasharray',d=>d.isInter?'3,3':null);
 
   const nd=g.append('g').attr('class','nodes').selectAll('g').data(nodes).join('g')
-    .style('cursor','pointer')
+    .style('cursor',d=>d.type==='funder'?'pointer':'default')
     .call(d3.drag()
       .on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;})
       .on('drag', (e,d)=>{d.fx=e.x;d.fy=e.y;})
@@ -1985,9 +2332,7 @@ function drawFunders(){
     .attr('stroke',d=>d.type==='center'?'var(--accent)':'rgba(255,255,255,0.15)')
     .attr('stroke-width',d=>d.type==='center'?2.5:0.7);
 
-  const thresh=funders.length>40?(funders[Math.floor(funders.length*0.25)]?.count||1):1;
-  nd.filter(d=>d.type==='center'||d.count>=thresh)
-    .append('text')
+  nd.append('text')
     .attr('dy',d=>d.r+9*labelScale)
     .attr('text-anchor','middle')
     .attr('font-family','IBM Plex Sans,sans-serif')
@@ -2001,44 +2346,156 @@ function drawFunders(){
     let h=`<strong>${d.label}</strong>`;
     if(d.type==='funder'){
       h+=`<div class="tr">Funded papers: <span class="tv">${d.count}</span></div>`;
-      if(d.papers?.length) h+=`<div class="tr" style="margin-top:3px;max-width:200px;line-height:1.4">${d.papers.slice(0,2).join('<br>')}</div>`;
+      if(d.awardCount) h+=`<div class="tr">Distinct grants: <span class="tv">${d.awardCount}</span></div>`;
+      h+=`<div class="tr" style="margin-top:3px;color:var(--muted);font-size:10px">Click to highlight co-links</div>`;
+    } else {
+      h+=`<div class="tr" style="margin-top:3px;color:var(--muted);font-size:10px">Click to deselect</div>`;
     }
     tip.innerHTML=h; tip.style.display='block';
     tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY-10)+'px';
-  }).on('mouseleave',()=>tip.style.display='none');
+  }).on('mouseleave',()=>tip.style.display='none')
+    .on('click',(e,d)=>{
+      e.stopPropagation();
+      if(d.type==='center'){
+        deselAll();
+      } else {
+        selNode(d.id);
+      }
+    });
 
   sim.on('tick',()=>{
     lnk.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
         .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
     nd.attr('transform',d=>`translate(${d.x},${d.y})`);
   });
+
+  if(document.getElementById('funder-search')?.value.trim()){
+    applyFunderHighlight(_lastFunderSelection);
+  }
 }
+
+// ── Funder search bar (mirrors the geo country search UX) ──
+let _funderSearchMatches=[];
+let _lastFunderSelection=null;
+
+function onFunderSearchInput(v){
+  const dd=document.getElementById('funder-search-dropdown');
+  const term=v.trim().toLowerCase();
+  if(!term){dd.style.display='none';dd.innerHTML='';_funderSearchMatches=[];return;}
+  const list=_funderList.filter(f=>f.label.toLowerCase().includes(term)).slice(0,8);
+  _funderSearchMatches=list;
+  dd.innerHTML='';
+  if(!list.length){
+    const empty=document.createElement('div');
+    empty.className='geo-search-empty';
+    empty.textContent='No matching funder';
+    dd.appendChild(empty);
+    dd.style.display='block';
+    return;
+  }
+  // Built via DOM methods (not innerHTML+onclick) so funder names containing
+  // quotes/apostrophes can never break the markup or throw a syntax error.
+  list.forEach(f=>{
+    const item=document.createElement('div');
+    item.className='geo-search-item';
+    const nameSpan=document.createElement('span');
+    nameSpan.textContent=f.label;
+    const ctSpan=document.createElement('span');
+    ctSpan.className='gsi-ct';
+    ctSpan.textContent=f.count;
+    item.appendChild(nameSpan);
+    item.appendChild(ctSpan);
+    // mousedown (not click) so this fires before the input's blur handler hides the dropdown
+    item.addEventListener('mousedown',ev=>{ev.preventDefault();selectFunder(f.id);});
+    dd.appendChild(item);
+  });
+  dd.style.display='block';
+}
+
+function onFunderSearchKey(e){
+  if(e.key==='Enter'){
+    if(_funderSearchMatches.length) selectFunder(_funderSearchMatches[0].id);
+  } else if(e.key==='Escape'){
+    document.getElementById('funder-search-dropdown').style.display='none';
+  }
+}
+
+// Highlights the matching node (called on every redraw so a search selection
+// survives filter changes, which rebuild the graph from scratch).
+function applyFunderHighlight(id){
+  d3.selectAll('.nodes g').select('circle')
+    .attr('stroke',d=>(id&&d.id===id)?'var(--accent)':(d.type==='center'?'var(--accent)':'rgba(255,255,255,0.15)'))
+    .attr('stroke-width',d=>(id&&d.id===id)?3:(d.type==='center'?2.5:0.7));
+}
+
+// Called when the user picks a funder from the search dropdown / presses Enter.
+// Highlights its node and pans the view to bring it into the centre.
+function selectFunder(id){
+  const dd=document.getElementById('funder-search-dropdown');
+  const input=document.getElementById('funder-search');
+  const node=_funderList.find(f=>f.id===id);
+  if(dd) dd.style.display='none';
+  if(input&&node) input.value=node.label;
+  _lastFunderSelection=id;
+  applyFunderHighlight(id);
+  if(!node||node.x==null||!svgSel||!zoomB) return;
+  const cvs=document.getElementById('cvs');
+  const W=cvs.clientWidth,H=cvs.clientHeight;
+  const cur=d3.zoomTransform(svgSel.node());
+  const scale=Math.max(cur.k,1);
+  const tx=W/2-scale*node.x, ty=H/2-scale*node.y;
+  svgSel.transition().duration(600).call(zoomB.transform,d3.zoomIdentity.translate(tx,ty).scale(scale));
+}
+
 
 // ═══════════════════════════════════════════════════════════════
 // GEO MAP VIEW
 // ═══════════════════════════════════════════════════════════════
 async function drawGeo(){
-  const wrap=document.getElementById('geoview');
+  const wrap=document.getElementById('geo-canvas');
 
-  // ── Build country data from geoEnrich (permanent cache) merged with current coData counts ──
+  // ── Build country data: distinct co-authors (from geoEnrich) + distinct
+  // PAPERS per country (not the sum of each co-author's own shared-paper
+  // count, which double/triple-counts any paper with multiple co-authors
+  // from the same country) ──
   const countryData={};
   const coDataById={};
   coData.forEach(c=>{coDataById[c.id]=c;});
   // Use getFilterVisible (no minLinks) so geo map reflects institution/cluster
   // filters only — minLinks is a graph display setting, not a data filter
   const visibleIds=new Set(getFilterVisible().map(c=>c.id));
+
+  // Distinct collaborators per country
   Object.entries(geoEnrich).forEach(([id,geo])=>{
     if(!geo.country) return;
     if(!visibleIds.has(id)) return;
-    const cc=geo.country.toUpperCase();
     const c=coDataById[id];
-    const count=c?c.count:0;
-    // Only count as a collaborator if they have shared papers in the current filter window
-    if(!count) return;
-    if(!countryData[cc]) countryData[cc]={count:0,collaborators:[],clusters:[]};
-    countryData[cc].count+=count;
-    if(c){countryData[cc].collaborators.push(c.name);countryData[cc].clusters.push(c.cluster);}
+    if(!c||!c.count) return; // must have at least 1 shared paper in current filter window
+    const cc=geo.country.toUpperCase();
+    if(!countryData[cc]) countryData[cc]={count:0,collaborators:[],clusters:[],paperIds:new Set()};
+    countryData[cc].collaborators.push(c.name);
+    countryData[cc].clusters.push(c.cluster);
   });
+
+  // Distinct papers per country — one paper counts once per country even if
+  // several co-authors from that country are on it together
+  getClusterFilteredPapers().forEach(p=>{
+    const auths=p.authorships||[];
+    const countriesOnPaper=new Set();
+    auths.forEach(a=>{
+      const id=a.author?.id;
+      if(!id||id===authorRec.id) return;
+      if(!visibleIds.has(id)) return;
+      const geo=geoEnrich[id];
+      if(geo?.country) countriesOnPaper.add(geo.country.toUpperCase());
+    });
+    countriesOnPaper.forEach(cc=>{
+      if(countryData[cc]) countryData[cc].paperIds.add(p.id);
+    });
+  });
+  Object.values(countryData).forEach(cd=>{cd.count=cd.paperIds.size;});
+
+  _geoCountryData=countryData;
 
   if(!Object.keys(countryData).length){
     wrap.innerHTML=`<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--muted);text-align:center;font-size:13px;pointer-events:none;">
@@ -2070,47 +2527,6 @@ async function drawGeo(){
     });
   }
 
-  // Full country name lookup: ISO-3166 numeric → {alpha2, name}
-  const isoMap={
-    4:{a:'AF',n:'Afghanistan'},8:{a:'AL',n:'Albania'},12:{a:'DZ',n:'Algeria'},
-    24:{a:'AO',n:'Angola'},32:{a:'AR',n:'Argentina'},36:{a:'AU',n:'Australia'},
-    40:{a:'AT',n:'Austria'},50:{a:'BD',n:'Bangladesh'},56:{a:'BE',n:'Belgium'},
-    64:{a:'BT',n:'Bhutan'},68:{a:'BO',n:'Bolivia'},76:{a:'BR',n:'Brazil'},
-    100:{a:'BG',n:'Bulgaria'},116:{a:'KH',n:'Cambodia'},120:{a:'CM',n:'Cameroon'},
-    124:{a:'CA',n:'Canada'},152:{a:'CL',n:'Chile'},156:{a:'CN',n:'China'},
-    170:{a:'CO',n:'Colombia'},188:{a:'CR',n:'Costa Rica'},191:{a:'HR',n:'Croatia'},
-    196:{a:'CY',n:'Cyprus'},203:{a:'CZ',n:'Czech Republic'},208:{a:'DK',n:'Denmark'},
-    218:{a:'EC',n:'Ecuador'},818:{a:'EG',n:'Egypt'},231:{a:'ET',n:'Ethiopia'},
-    246:{a:'FI',n:'Finland'},250:{a:'FR',n:'France'},276:{a:'DE',n:'Germany'},
-    288:{a:'GH',n:'Ghana'},300:{a:'GR',n:'Greece'},320:{a:'GT',n:'Guatemala'},
-    332:{a:'HT',n:'Haiti'},356:{a:'IN',n:'India'},360:{a:'ID',n:'Indonesia'},
-    364:{a:'IR',n:'Iran'},368:{a:'IQ',n:'Iraq'},376:{a:'IL',n:'Israel'},
-    380:{a:'IT',n:'Italy'},388:{a:'JM',n:'Jamaica'},392:{a:'JP',n:'Japan'},
-    400:{a:'JO',n:'Jordan'},404:{a:'KE',n:'Kenya'},408:{a:'KP',n:'North Korea'},
-    410:{a:'KR',n:'South Korea'},414:{a:'KW',n:'Kuwait'},418:{a:'LA',n:'Laos'},
-    422:{a:'LB',n:'Lebanon'},428:{a:'LV',n:'Latvia'},440:{a:'LT',n:'Lithuania'},
-    442:{a:'LU',n:'Luxembourg'},434:{a:'LY',n:'Libya'},484:{a:'MX',n:'Mexico'},
-    504:{a:'MA',n:'Morocco'},508:{a:'MZ',n:'Mozambique'},516:{a:'NA',n:'Namibia'},
-    524:{a:'NP',n:'Nepal'},528:{a:'NL',n:'Netherlands'},554:{a:'NZ',n:'New Zealand'},
-    566:{a:'NG',n:'Nigeria'},578:{a:'NO',n:'Norway'},586:{a:'PK',n:'Pakistan'},
-    591:{a:'PA',n:'Panama'},604:{a:'PE',n:'Peru'},608:{a:'PH',n:'Philippines'},
-    616:{a:'PL',n:'Poland'},620:{a:'PT',n:'Portugal'},634:{a:'QA',n:'Qatar'},
-    642:{a:'RO',n:'Romania'},643:{a:'RU',n:'Russia'},646:{a:'RW',n:'Rwanda'},
-    682:{a:'SA',n:'Saudi Arabia'},686:{a:'SN',n:'Senegal'},710:{a:'ZA',n:'South Africa'},
-    724:{a:'ES',n:'Spain'},144:{a:'LK',n:'Sri Lanka'},752:{a:'SE',n:'Sweden'},
-    756:{a:'CH',n:'Switzerland'},760:{a:'SY',n:'Syria'},764:{a:'TH',n:'Thailand'},
-    834:{a:'TZ',n:'Tanzania'},792:{a:'TR',n:'Turkey'},800:{a:'UG',n:'Uganda'},
-    804:{a:'UA',n:'Ukraine'},784:{a:'AE',n:'United Arab Emirates'},
-    826:{a:'GB',n:'United Kingdom'},840:{a:'US',n:'United States'},
-    858:{a:'UY',n:'Uruguay'},862:{a:'VE',n:'Venezuela'},704:{a:'VN',n:'Vietnam'},
-    887:{a:'YE',n:'Yemen'},894:{a:'ZM',n:'Zambia'},716:{a:'ZW',n:'Zimbabwe'},
-    372:{a:'IE',n:'Ireland'},470:{a:'MT',n:'Malta'},703:{a:'SK',n:'Slovakia'},
-    705:{a:'SI',n:'Slovenia'},807:{a:'MK',n:'North Macedonia'},499:{a:'ME',n:'Montenegro'},
-    688:{a:'RS',n:'Serbia'},70:{a:'BA',n:'Bosnia and Herzegovina'},
-    233:{a:'EE',n:'Estonia'},426:{a:'LS',n:'Lesotho'},430:{a:'LR',n:'Liberia'},
-    694:{a:'SL',n:'Sierra Leone'},706:{a:'SO',n:'Somalia'},729:{a:'SD',n:'Sudan'}
-  };
-
   // ── Render (runs on every filter change, no fetch needed) ──
   wrap.innerHTML='';
   const W=wrap.clientWidth, H=wrap.clientHeight;
@@ -2119,13 +2535,13 @@ async function drawGeo(){
   const countries=topojson.feature(_worldCache,_worldCache.objects.countries);
   const proj=d3.geoNaturalEarth1().fitSize([W-20,H-20],countries).translate([W/2,H/2]);
   const path=d3.geoPath().projection(proj);
+  _geoFeatures=countries.features;
+  _geoPath=path;
 
   const maxCount=d3.max(Object.values(countryData),d=>d.count)||1;
-  const colSc=d3.scaleSequential()
-    .domain([0,maxCount])
-    .interpolator(dark
-      ? d3.interpolate('#1e2130','#4fc3f7')
-      : d3.interpolate('#dde0ee','#1565c0'));
+  // Intensity (collaboration volume) is now conveyed via opacity, since each
+  // country gets its own distinct hue instead of a shared intensity gradient.
+  const opSc=d3.scaleLinear().domain([0,maxCount]).range([0.45,1]).clamp(true);
 
   const zg=svg.append('g');
   geoZoomB=d3.zoom().scaleExtent([0.5,12]).on('zoom',e=>zg.attr('transform',e.transform));
@@ -2133,44 +2549,137 @@ async function drawGeo(){
 
   const gt=document.getElementById('geotip');
 
-  zg.append('g').selectAll('path').data(countries.features).join('path')
+  _geoPathSel=zg.append('g').selectAll('path').data(countries.features).join('path')
     .attr('d',path)
     .attr('fill',f=>{
-      const info=isoMap[+f.id];
+      const info=ISO_MAP[+f.id];
       if(!info) return dark?'#1a1d24':'#d8daea';
       const cd=countryData[info.a];
-      return cd ? colSc(cd.count) : (dark?'#1a1d24':'#d8daea');
+      return cd ? countryFillColor(info.a) : (dark?'#1a1d24':'#d8daea');
+    })
+    .attr('fill-opacity',f=>{
+      const info=ISO_MAP[+f.id];
+      const cd=info&&countryData[info.a];
+      return cd ? opSc(cd.count) : 1;
     })
     .attr('stroke',dark?'#2a2d38':'#b0b3c5')
     .attr('stroke-width',0.4)
-    .style('cursor',f=>{
-      const info=isoMap[+f.id];
-      return (info&&countryData[info.a])?'pointer':'default';
-    })
+    .attr('vector-effect','non-scaling-stroke')
+    .style('cursor',f=>ISO_MAP[+f.id]?'pointer':'default')
     .on('mousemove',(ev,f)=>{
-      const info=isoMap[+f.id];
-      if(!info||!countryData[info.a]) return;
+      const info=ISO_MAP[+f.id];
+      if(!info) return;
       const cd=countryData[info.a];
-      const names=cd.collaborators.slice(0,5).join(', ')+(cd.collaborators.length>5?` +${cd.collaborators.length-5} more`:'');
-      gt.innerHTML=`<b>${info.n}</b>Collaborators: ${cd.collaborators.length} · Papers: ${cd.count}<br><span style="font-size:10.5px;color:var(--text2)">${names}</span>`;
+      if(cd){
+        const names=cd.collaborators.slice(0,5).join(', ')+(cd.collaborators.length>5?` +${cd.collaborators.length-5} more`:'');
+        gt.innerHTML=`<b>${info.n}</b>Collaborators: ${cd.collaborators.length} · Papers: ${cd.count}<br><span style="font-size:10.5px;color:var(--text2)">${names}</span>`;
+      } else {
+        gt.innerHTML=`<span style="color:var(--muted);font-weight:600;">${info.n}</span>`;
+      }
       gt.style.display='block';
       gt.style.left=(ev.clientX+14)+'px';
       gt.style.top=(ev.clientY-10)+'px';
     })
-    .on('mouseleave',()=>gt.style.display='none');
+    .on('mouseleave',()=>gt.style.display='none')
+    .on('click',(ev,f)=>{
+      const info=ISO_MAP[+f.id];
+      if(!info) return;
+      ev.stopPropagation();
+      selectGeoCountry(info.a);
+    });
 
-  // Colour legend bottom-right
+  // Legend bottom-right: hue = country, opacity = collaboration volume
   const legW=120,legH=10,legX=W-legW-24,legY=H-30;
   const defs=svg.append('defs');
   const grad=defs.append('linearGradient').attr('id','geo-grad');
-  grad.append('stop').attr('offset','0%').attr('stop-color',dark?'#1a1d24':'#d8daea');
-  grad.append('stop').attr('offset','100%').attr('stop-color',dark?'#4fc3f7':'#1565c0');
+  grad.append('stop').attr('offset','0%').attr('stop-color',dark?'#4fc3f7':'#1565c0').attr('stop-opacity',0.45);
+  grad.append('stop').attr('offset','100%').attr('stop-color',dark?'#4fc3f7':'#1565c0').attr('stop-opacity',1);
   svg.append('rect').attr('x',legX).attr('y',legY).attr('width',legW).attr('height',legH)
-    .attr('rx',2).attr('fill','url(#geo-grad)').attr('opacity',0.85);
+    .attr('rx',2).attr('fill','url(#geo-grad)');
   svg.append('text').attr('x',legX).attr('y',legY-4).attr('fill',dark?'#565c78':'#8c90aa').attr('font-size',9).text('fewer');
   svg.append('text').attr('x',legX+legW).attr('y',legY-4).attr('text-anchor','end').attr('fill',dark?'#565c78':'#8c90aa').attr('font-size',9).text('more');
+  svg.append('text').attr('x',legX+legW).attr('y',legY+legH+11).attr('text-anchor','end')
+    .attr('fill',dark?'#565c78':'#8c90aa').attr('font-size',9).text('each country = distinct colour');
 
   svgSel=svg; zoomB=geoZoomB;
+
+  // Re-apply any live search term / highlight so it survives filter-driven redraws
+  if(document.getElementById('geo-search')?.value.trim()){
+    applyGeoHighlight(_lastGeoSelection);
+  }
+}
+
+// ── Geo country search bar ──
+let _lastGeoSelection=null;
+
+function geoCountryList(){
+  return Object.entries(ISO_MAP).map(([id,info])=>({id:+id,a:info.a,n:info.n}));
+}
+
+function onGeoSearchInput(v){
+  const dd=document.getElementById('geo-search-dropdown');
+  const term=v.trim().toLowerCase();
+  if(!term){dd.style.display='none';dd.innerHTML='';_geoSearchMatches=[];return;}
+  const list=geoCountryList()
+    .filter(c=>c.n.toLowerCase().includes(term)||c.a.toLowerCase()===term)
+    .sort((a,b)=>a.n.localeCompare(b.n))
+    .slice(0,8);
+  _geoSearchMatches=list;
+  if(!list.length){
+    dd.innerHTML='<div class="geo-search-empty">No matching country</div>';
+    dd.style.display='block';
+    return;
+  }
+  dd.innerHTML=list.map(c=>{
+    const cd=_geoCountryData?.[c.a];
+    return `<div class="geo-search-item" onclick="selectGeoCountry('${c.a}')">
+      <span>${c.n}</span>
+      ${cd?`<span class="gsi-ct">${cd.collaborators.length} collab.</span>`:''}
+    </div>`;
+  }).join('');
+  dd.style.display='block';
+}
+
+function onGeoSearchKey(e){
+  if(e.key==='Enter'){
+    if(_geoSearchMatches.length) selectGeoCountry(_geoSearchMatches[0].a);
+  } else if(e.key==='Escape'){
+    document.getElementById('geo-search-dropdown').style.display='none';
+  }
+}
+
+// Highlight (without moving the camera) — called on every geo redraw so a
+// search selection survives filter changes, which rebuild the map from scratch.
+function applyGeoHighlight(alpha2){
+  if(!_geoPathSel) return;
+  const info=alpha2?ISO_BY_ALPHA[alpha2]:null;
+  _geoPathSel
+    .attr('stroke',f=>(info&&+f.id===info.id)?'var(--accent)':(dark?'#2a2d38':'#b0b3c5'))
+    .attr('stroke-width',f=>(info&&+f.id===info.id)?2.4:0.4);
+}
+
+// Called when the user picks a country from the search dropdown / presses Enter.
+// Highlights it and smoothly zooms the map to its bounding box.
+function selectGeoCountry(alpha2){
+  const dd=document.getElementById('geo-search-dropdown');
+  const input=document.getElementById('geo-search');
+  const info=ISO_BY_ALPHA[alpha2];
+  if(dd) dd.style.display='none';
+  if(input&&info) input.value=info.n;
+  _lastGeoSelection=alpha2;
+  applyGeoHighlight(alpha2);
+  if(!info||!_geoFeatures||!_geoPath||!svgSel) return;
+  const feature=_geoFeatures.find(f=>+f.id===info.id);
+  if(!feature) return; // country has no shape on this simplified world map
+  const wrap=document.getElementById('geo-canvas');
+  const W=wrap.clientWidth, H=wrap.clientHeight;
+  const [[x0,y0],[x1,y1]]=_geoPath.bounds(feature);
+  const dx=Math.max(x1-x0,1), dy=Math.max(y1-y0,1);
+  const cx=(x0+x1)/2, cy=(y0+y1)/2;
+  const scale=Math.max(1,Math.min(10,0.85/Math.max(dx/W,dy/H)));
+  const tx=W/2-scale*cx, ty=H/2-scale*cy;
+  svgSel.transition().duration(700)
+    .call(geoZoomB.transform, d3.zoomIdentity.translate(tx,ty).scale(scale));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2191,11 +2700,12 @@ function selNode(id){
   selId=id;
   document.querySelectorAll('.ci').forEach(el=>el.classList.toggle('sel',el.dataset.id===id));
   if(vizMode==='geo') return;
-  // Dim all nodes except selected
+  // Dim all nodes except selected (the centre node is always kept visible,
+  // regardless of view — network's centre uses authorRec.id, funders' uses '_main')
   d3.selectAll('.nodes g circle').attr('fill-opacity',d=>
-    (!d.id||d.id===id||d.id===authorRec?.id) ? (d.type==='center'?1:0.82) : 0.08);
+    (!d.id||d.id===id||d.type==='center') ? (d.type==='center'?1:0.82) : 0.08);
   d3.selectAll('.nodes g text').attr('opacity',d=>
-    (!d.id||d.id===id||d.id===authorRec?.id) ? 1 : 0.08);
+    (!d.id||d.id===id||d.type==='center') ? 1 : 0.08);
   // Highlight links connected to selected node in either direction; dim everything else
   d3.selectAll('.links line').attr('stroke-opacity',d=>{
     const s=d.source?.id||d.source, t=d.target?.id||d.target;
@@ -2250,7 +2760,7 @@ function showModal(){
   const cl=document.getElementById('contact-link');
   if(cl&&!cl.innerHTML){
     const u='joebarnier1',d='gmail.com';
-    cl.innerHTML=`Contact <a href="mailto:${u}@${d}" style="color:var(--accent);text-decoration:none;">${u}@${d}</a>`;
+    cl.innerHTML=`Contact <a href="mailto:${u}@${d}" style="color:var(--accent);text-decoration:none;">${u}@${d}</a><a href="https://au.linkedin.com/in/joe-barnier-a227421b2" target="_blank" rel="noopener" title="LinkedIn" style="display:inline-flex;vertical-align:middle;margin-left:7px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>`;
   }
 }
 function hideModal(){
@@ -2378,7 +2888,7 @@ async function exportPNG(){
 document.addEventListener('DOMContentLoaded',()=>{
   // Pre-build contact link so it's ready whether modal auto-opens or is clicked open
   const cl=document.getElementById('contact-link');
-  if(cl){const u='joebarnier1',d='gmail.com';cl.innerHTML=`Contact <a href="mailto:${u}@${d}" style="color:var(--accent);text-decoration:none;">${u}@${d}</a>`;}
+  if(cl){const u='joebarnier1',d='gmail.com';cl.innerHTML=`Contact <a href="mailto:${u}@${d}" style="color:var(--accent);text-decoration:none;">${u}@${d}</a><a href="https://au.linkedin.com/in/joe-barnier-a227421b2" target="_blank" rel="noopener" title="LinkedIn" style="display:inline-flex;vertical-align:middle;margin-left:7px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>`;}
 
   // ── Permalink auto-load ──
   // If URL contains ?author=A12345678, auto-load that author silently
@@ -2439,16 +2949,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     <!-- Tab: Guide -->
     <div id="mtabpanel-guide" class="modal-body">
-
-      <!-- Rebranding notice -->
-      <div style="background:rgba(79,195,247,0.08);border:1px solid rgba(79,195,247,0.35);border-radius:5px;padding:9px 13px;margin-bottom:10px;display:flex;align-items:flex-start;gap:9px;">
-        <span style="font-size:15px;flex-shrink:0;line-height:1.3;">📢</span>
-        <div style="font-size:11.5px;color:var(--text2);line-height:1.6;">
-          <strong style="color:var(--accent);">ScholarNet is now CoAuthra.</strong>
-          This site has been rebranded from ScholarNet to <strong style="color:var(--text);">CoAuthra</strong>.
-          The old URL <span style="color:var(--text2);">scholarnet.net</span> will automatically be redirected to <strong style="color:var(--text);">coauthra.com</strong>.
-        </div>
-      </div>
 
       <div class="modal-grid">
 
@@ -2514,6 +3014,20 @@ document.addEventListener('DOMContentLoaded',()=>{
         <div class="mcard" style="grid-column:1/-1;height:auto;overflow-y:visible;">
           <h3><span>🔬</span> Community Detection</h3>
           <p>With Co-links enabled, direct co-author-to-co-author edges are computed from shared papers. The <strong>Louvain algorithm</strong> — a modularity-maximising community detection method — is run on this graph to assign cluster membership, grouping researchers who frequently collaborate with each other into the same colour cluster. With Co-links off, clusters fall back to the primary research topic of shared papers as reported by OpenAlex, keeping colours stable across filter changes.</p>
+        </div>
+
+        <div class="mcard" style="grid-column:1/-1;height:auto;overflow-y:visible;border-left:3px solid rgba(79,195,247,0.6);">
+          <h3><span>🎯</span> Assumptions &amp; Definitions</h3>
+          <p>Specific criteria worth knowing when interpreting the graph:</p>
+          <p style="margin-top:6px;">
+          • <strong>Topic clusters</strong> reflect the primary topic of papers <em>shared</em> with the searched researcher — not that co-author's overall research focus across their whole career. A frequent collaborator's cluster can differ from what their own OpenAlex profile shows as their top topic.<br><br>
+          • <strong>Citations</strong> (Citations view) size each node by that co-author's <strong>total lifetime citation count</strong> across all of their published work — not citations specific to papers shared with the searched researcher.<br><br>
+          • <strong>Institution &amp; Country</strong> use each co-author's <em>last known</em> (most recent) affiliation on record in OpenAlex — a single snapshot, not a full affiliation history. Co-authors OpenAlex can't resolve an institution for appear under "Unknown / None."<br><br>
+          • <strong>Geo map</strong> counts a country's "Papers" as the number of <em>distinct</em> papers with at least one visible co-author affiliated there — a single paper with several co-authors from the same country still counts once, not once per co-author.<br><br>
+          • <strong>Funders</strong> are pulled from OpenAlex's grants metadata (sourced via Crossref), which has inconsistent coverage across fields and eras. A paper showing no funder usually means that record is missing in OpenAlex, not that the work was unfunded.<br><br>
+          • <strong>Link strength</strong> is fractional per paper (<code>1 / number of co-authors</code>), so a two-author paper creates a stronger tie than a fifty-author consortium paper with the same shared-paper count.<br><br>
+          • <strong>Default filtering</strong> shows only the top ~100 strongest collaborations to keep the graph readable — lower <em>Min. shared papers</em> in the sidebar to reveal more.
+          </p>
         </div>
 
         <div class="mcard" style="grid-column:1/-1;height:auto;overflow-y:visible;">
