@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CoAuthra — Collaboration Map</title>
 <script>
 // Redirect scholarnet.net → coauthra.com (preserves ?author= permalinks)
@@ -123,6 +123,14 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 /* ── LAYOUT ── */
 #app{display:flex;flex:1;overflow:hidden;}
 
+/* Topbar grouping wrappers — transparent on desktop (children behave as if
+   unwrapped), become real flex rows on mobile. See mobile media query. */
+#tb-search,#tb-tools{display:contents;}
+/* Mobile-only controls, hidden on desktop */
+#mobile-filter-btn{display:none;}
+#panel-mobile-head{display:none;}
+#panel-backdrop{display:none;}
+
 /* ── CANVAS ── */
 #cvs{flex:1;position:relative;overflow:hidden;background:var(--canvas);}
 #cvs svg{width:100%;height:100%;display:block;}
@@ -147,6 +155,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
          font-family:'IBM Plex Sans',sans-serif;font-size:12px;padding:4px 8px;
          outline:none;border-radius:3px;margin-bottom:8px;}
 #lsearch:focus{border-color:var(--accent);}
+.table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 #ltbl{width:100%;border-collapse:collapse;font-size:12px;}
 #ltbl th{text-align:left;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.07em;
          text-transform:uppercase;padding:4px 7px;border-bottom:1px solid var(--border);
@@ -307,6 +316,175 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
      border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,0.5);}
 #tip strong{color:var(--accent);display:block;margin-bottom:2px;font-size:12.5px;}
 .tr{color:var(--text2);font-size:11px;}.tv{color:var(--text);}
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE LAYOUT (≤900px)
+   Desktop layout above is untouched — everything here is additive
+   and scoped to this breakpoint.
+═══════════════════════════════════════════════════════════════ */
+@media (max-width:900px){
+
+  /* ── Topbar: compact app-bar + full-width search row +
+     horizontally-scrollable tool strip ── */
+  #topbar{
+    gap:8px;
+    padding:8px 10px;
+    padding-top:calc(8px + env(safe-area-inset-top));
+    padding-left:calc(10px + env(safe-area-inset-left));
+    padding-right:calc(10px + env(safe-area-inset-right));
+  }
+  .logo{order:1;}
+  .logo-name{font-size:15px;}
+  #mobile-filter-btn{
+    display:flex;order:2;margin-left:auto;
+    width:38px;height:38px;font-size:16px;flex-shrink:0;
+    border-color:rgba(171,71,188,0.9);
+    background:rgba(171,71,188,0.28);
+    color:#e1bee7;
+    animation:filterBtnGlow 2.4s ease-in-out infinite;
+  }
+  @keyframes filterBtnGlow{
+    0%,100%{box-shadow:0 0 0 0 rgba(171,71,188,0.55),0 0 6px 0 rgba(171,71,188,0.35);}
+    50%{box-shadow:0 0 0 7px rgba(171,71,188,0),0 0 16px 3px rgba(171,71,188,0.75);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    #mobile-filter-btn{animation:none;box-shadow:0 0 10px 1px rgba(171,71,188,0.5);}
+  }
+  .help-btn{order:3;width:38px;height:38px;font-size:14px;
+    display:flex;align-items:center;justify-content:center;padding:0;}
+  .sep{display:none;}
+
+  #tb-search{
+    display:flex;order:4;flex-basis:100%;width:100%;min-width:0;
+    gap:8px;align-items:center;
+  }
+  .mtoggle{flex-shrink:0;}
+  .mbtn{padding:8px 10px;font-size:12.5px;}
+  .swrap{min-width:0;max-width:none;flex:1 1 auto;}
+  .swrap input{padding:8px 10px;font-size:16px;min-width:0;} /* 16px avoids iOS auto-zoom; min-width:0 lets it actually shrink */
+  .bgo{padding:8px 14px;font-size:13px;flex-shrink:0;}
+
+  #tb-tools{
+    display:flex;order:5;flex-basis:100%;width:100%;min-width:0;
+    flex-wrap:nowrap;overflow-x:auto;gap:6px;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none;
+    padding-bottom:1px;
+  }
+  #tb-tools::-webkit-scrollbar{display:none;}
+  #tb-tools>*{flex-shrink:0;}
+  #tb-tools .tab{padding:8px 12px;font-size:12.5px;}
+  #tb-tools .action-btn{padding:8px 11px;font-size:12px;height:34px;}
+
+  /* ── Off-canvas filter/stats drawer (replaces desktop push-column) ── */
+  #panel-handle{display:none;}
+  #panel,#panel.collapsed{
+    position:fixed;top:0;right:0;bottom:0;height:100%;
+    width:min(86vw,340px);max-width:340px;
+    border-left:1px solid var(--border2);
+    flex-direction:column;
+    transform:translateX(100%);
+    transition:transform .25s ease;
+    z-index:60;
+    box-shadow:-10px 0 30px rgba(0,0,0,0.5);
+    padding-top:env(safe-area-inset-top);
+    padding-right:env(safe-area-inset-right);
+  }
+  #panel.mobile-open{transform:translateX(0);}
+  #panel #panel-scroll,#panel.collapsed #panel-scroll{
+    display:flex !important;flex:1;overflow-y:auto;
+  }
+  #panel-mobile-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 16px;border-bottom:1px solid var(--border);flex-shrink:0;
+  }
+  #panel-mobile-head span{font-size:13px;font-weight:600;color:var(--text);
+    text-transform:uppercase;letter-spacing:.05em;}
+  #panel-mobile-head button{
+    background:transparent;border:1px solid var(--border);color:var(--text2);
+    width:32px;height:32px;border-radius:6px;font-size:15px;cursor:pointer;
+  }
+  #panel-backdrop.show{
+    display:block;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:55;
+  }
+  .psec{padding:14px 16px;}
+  .psec h4{font-size:11px;}
+  #stats{font-size:13px;}
+  .srow{font-size:13px;padding:5px 0;}
+  .sval{font-size:12.5px;}
+  .crow{font-size:13px;}
+  .clbl{font-size:12.5px;}
+  .cval{font-size:12px;}
+  .tf-chip{font-size:12px;padding:6px 11px;}
+  .cfi{font-size:13px;padding:6px 0;}
+  .cfi input[type=checkbox]{width:15px;height:15px;}
+  .ci{padding:9px 16px;}
+  .ci-nm{font-size:13px;}
+  .ci-ct{font-size:12px;}
+  .jrow{font-size:12.5px;padding:5px 0;}
+  .mini-search{font-size:16px;padding:8px 9px;}
+  .tall-btn{font-size:11px;}
+
+  /* Bigger touch targets on range/checkbox controls */
+  input[type=range]{height:5px;}
+  input[type=range]::-webkit-slider-thumb{width:18px;height:18px;}
+  .dual-range-wrap input[type=range]::-webkit-slider-thumb{width:19px;height:19px;}
+  .dual-range-wrap{height:24px;}
+  input[type=checkbox]{width:16px;height:16px;}
+
+  /* ── Canvas overlays ── */
+  #zbts{
+    bottom:calc(14px + env(safe-area-inset-bottom));
+    right:calc(14px + env(safe-area-inset-right));
+  }
+  #zbts button{width:38px;height:38px;font-size:16px;}
+  #vlegend{
+    bottom:calc(14px + env(safe-area-inset-bottom));
+    left:calc(14px + env(safe-area-inset-left));
+    max-width:150px;font-size:10.5px;
+  }
+  #geo-search-wrap,#funder-search-wrap{
+    top:calc(10px + env(safe-area-inset-top));
+    left:calc(10px + env(safe-area-inset-left));
+    width:min(230px,calc(100vw - 24px));
+  }
+  #geo-search,#funder-search{font-size:16px;padding:9px 10px;}
+  #status{font-size:13px;padding:0 20px;}
+
+  /* ── List view: scrollable + touch-friendly, drop least-critical
+     columns on very small screens instead of squeezing everything ── */
+  #listview{padding:12px 12px;}
+  #lsearch{font-size:16px;padding:8px 9px;}
+  #ltbl th,#ltbl td{padding:7px 8px;}
+  #ltbl{font-size:12px;}
+
+  /* ── Welcome modal: full-screen, single column, no nested scroll ── */
+  #modal-bg{padding:0;}
+  #modal{
+    width:100vw;max-width:100vw;height:100%;max-height:100dvh;
+    border-radius:0;
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .modal-head{padding:18px 16px 12px;gap:12px;}
+  .modal-head-text h1{font-size:16px;}
+  .modal-head-text p{font-size:12.5px;}
+  .modal-body{padding:14px 16px 4px;}
+  .modal-grid{grid-template-columns:1fr;gap:10px;}
+  .mcard{height:auto;overflow-y:visible;padding:13px 14px;}
+  .mcard p{font-size:12.5px;}
+  #mtab-guide,#mtab-howitworks,#mtab-disclaimer{
+    flex:1;text-align:center;padding:11px 8px 10px;font-size:12.5px;
+  }
+  .modal-footer{padding:14px 16px calc(16px + env(safe-area-inset-bottom));}
+  .modal-footer>div:first-child{flex-wrap:wrap;gap:10px;}
+  .modal-btn{padding:9px 22px;font-size:13px;}
+}
+
+@media (max-width:480px){
+  .logo-tag{display:none;}
+  #ltbl th:nth-child(7),#ltbl td:nth-child(7),
+  #ltbl th:nth-child(8),#ltbl td:nth-child(8){display:none;}
+}
 </style>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GQZD3LZ87H"></script>
@@ -334,39 +512,45 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     </div>
   </div>
 
-  <div class="mtoggle">
-    <button class="mbtn on" id="m-name" onclick="setMode('name')">Name</button>
-    <button class="mbtn" id="m-orcid" onclick="setMode('orcid')">ORCID</button>
-  </div>
+  <button class="ibtn" id="mobile-filter-btn" onclick="toggleMobilePanel()" title="Filters & Stats" aria-label="Open filters and stats">☰</button>
 
-  <div class="swrap">
-    <input type="text" id="qinput" placeholder="Researcher name"
-           onkeydown="if(event.key==='Enter')doSearch()"/>
-    <button class="bgo" id="sbtn" onclick="doSearch()">Search</button>
-    <div id="author-picker"></div>
-  </div>
+  <div id="tb-search">
+    <div class="mtoggle">
+      <button class="mbtn on" id="m-name" onclick="setMode('name')">Name</button>
+      <button class="mbtn" id="m-orcid" onclick="setMode('orcid')">ORCID</button>
+    </div>
 
-  <div class="sep"></div>
-
-  <!-- Viz mode -->
-  <div class="tabs" id="vtabs">
-    <button class="tab on" data-m="network" onclick="setViz('network')" title="Co-authorship network">Network</button>
-    <button class="tab" data-m="citations" onclick="setViz('citations')" title="Node size = co-author citations">Citations</button>
-    <button class="tab" data-m="funders" onclick="setViz('funders')" title="Funder co-occurrence network">Funders</button>
-    <button class="tab" data-m="geo" onclick="setViz('geo')" title="Geographic collaboration map">Geo</button>
+    <div class="swrap">
+      <input type="text" id="qinput" placeholder="Researcher name"
+             onkeydown="if(event.key==='Enter')doSearch()"/>
+      <button class="bgo" id="sbtn" onclick="doSearch()">Search</button>
+      <div id="author-picker"></div>
+    </div>
   </div>
 
   <div class="sep"></div>
 
-  <div class="tabs">
-    <button class="tab on" id="tg" onclick="setMainView('graph')">Graph</button>
-    <button class="tab" id="tl" onclick="setMainView('list')">List</button>
+  <div id="tb-tools">
+    <!-- Viz mode -->
+    <div class="tabs" id="vtabs">
+      <button class="tab on" data-m="network" onclick="setViz('network')" title="Co-authorship network">Network</button>
+      <button class="tab" data-m="citations" onclick="setViz('citations')" title="Node size = co-author citations">Citations</button>
+      <button class="tab" data-m="funders" onclick="setViz('funders')" title="Funder co-occurrence network">Funders</button>
+      <button class="tab" data-m="geo" onclick="setViz('geo')" title="Geographic collaboration map">Geo</button>
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="tabs">
+      <button class="tab on" id="tg" onclick="setMainView('graph')">Graph</button>
+      <button class="tab" id="tl" onclick="setMainView('list')">List</button>
+    </div>
+
+    <div class="sep"></div>
+    <button class="action-btn" id="share-btn" onclick="sharePermalink()" title="Copy shareable link" disabled>⤴ Share</button>
+    <button class="action-btn" id="export-btn" onclick="exportPNG()" title="Save network as PNG" disabled>↓ PNG</button>
   </div>
 
-  <div class="sep"></div>
-  <button class="ibtn" id="interbtn" title="Show links between co-authors / co-funders derived from shared papers" onclick="toggleInterLinks()" style="font-size:10px;font-weight:700;width:auto;padding:0 9px;white-space:nowrap;border-color:rgba(171,71,188,0.9);background:rgba(171,71,188,0.28);color:#e1bee7;gap:4px;display:flex;align-items:center;">★ Co-links</button>
-  <button class="action-btn" id="share-btn" onclick="sharePermalink()" title="Copy shareable link" disabled>⤴ Share</button>
-  <button class="action-btn" id="export-btn" onclick="exportPNG()" title="Save network as PNG" disabled>↓ PNG</button>
   <button class="help-btn" onclick="showModal()" title="Help & About">?</button>
 </div>
 
@@ -408,6 +592,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
   <!-- LIST VIEW -->
   <div id="listview">
     <input type="text" id="lsearch" placeholder="Search collaborators…" oninput="filterList(this.value)" />
+    <div class="table-scroll">
     <table id="ltbl">
       <thead><tr>
         <th onclick="sortList('rank')">#</th>
@@ -421,11 +606,19 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       </tr></thead>
       <tbody id="lbody"></tbody>
     </table>
+    </div>
   </div>
+
+  <!-- Backdrop for mobile filter drawer -->
+  <div id="panel-backdrop" onclick="closeMobilePanel()"></div>
 
   <!-- PANEL -->
   <div id="panel">
     <div id="panel-handle" data-arrow="›" onclick="togglePanel()" title="Hide sidebar"></div>
+  <div id="panel-mobile-head">
+    <span>Filters &amp; Stats</span>
+    <button onclick="closeMobilePanel()" aria-label="Close">✕</button>
+  </div>
   <div id="panel-scroll">
 
     <!-- Stats + OA bar -->
@@ -563,8 +756,8 @@ let _worldCache=null;
 let _geoFeatures=null, _geoPath=null, _geoPathSel=null, _geoCountryData=null;
 let _geoSearchMatches=[];
 let instSearchTerm='', clusterSearchTerm='';
-// Inter-collaborator links toggle
-let interLinksEnabled=true;
+// Inter-collaborator (co-author/co-funder) links — always on, no UI toggle
+const interLinksEnabled=true;
 
 const COLORS=[
   '#4fc3f7','#ef5350','#66bb6a','#ffca28','#ab47bc',
@@ -779,6 +972,20 @@ function onLS(v){labelScale=v/10;document.getElementById('ls-v').textContent=lab
 // ═══════════════════════════════════════════════════════════════
 function showStatus(h){const s=document.getElementById('status');s.style.display='block';s.innerHTML=h;}
 function hideStatus(){document.getElementById('status').style.display='none';}
+
+// Position a tooltip near (x,y) but clamp it inside the viewport so it never
+// gets clipped off-screen — matters most on narrow mobile screens.
+function placeTip(el,x,y){
+  const pad=10,offX=14,offY=10;
+  const w=el.offsetWidth||230, h=el.offsetHeight||60;
+  let left=x+offX, top=y-offY;
+  if(left+w>window.innerWidth-pad) left=x-w-offX;
+  if(left<pad) left=pad;
+  if(top+h>window.innerHeight-pad) top=window.innerHeight-h-pad;
+  if(top<pad) top=pad;
+  el.style.left=left+'px';
+  el.style.top=top+'px';
+}
 
 // ═══════════════════════════════════════════════════════════════
 // FETCH HELPERS
@@ -1695,23 +1902,8 @@ function redraw(){
   else drawNetwork(vis);
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INTER-COLLABORATOR LINKS
-// ═══════════════════════════════════════════════════════════════
-function toggleInterLinks(){
-  interLinksEnabled=!interLinksEnabled;
-  const btn=document.getElementById('interbtn');
-  if(interLinksEnabled){
-    btn.style.borderColor='rgba(171,71,188,0.9)';
-    btn.style.background='rgba(171,71,188,0.28)';
-    btn.style.color='#e1bee7';
-  } else {
-    btn.style.borderColor='rgba(171,71,188,0.6)';
-    btn.style.background='rgba(171,71,188,0.12)';
-    btn.style.color='#ce93d8';
-  }
-  if(coData.length) redraw();
-}
+// Inter-collaborator links are always on (see interLinksEnabled below) —
+// there is no longer a UI toggle for this.
 
 // Build A↔B edges from papers already fetched.
 // Only includes pairs where both A and B are in the visible node set.
@@ -2065,7 +2257,7 @@ function drawNetwork(coauthors){
       h+=`<div class="tr" style="margin-top:3px;color:var(--muted);font-size:10px">Click to deselect · Right-click for OpenAlex ↗</div>`;
     }
     tip.innerHTML=h; tip.style.display='block';
-    tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY-10)+'px';
+    placeTip(tip,e.clientX,e.clientY);
   }).on('mouseleave',()=>tip.style.display='none')
     .on('click',(e,d)=>{
       e.stopPropagation();
@@ -2352,7 +2544,7 @@ function drawFunders(){
       h+=`<div class="tr" style="margin-top:3px;color:var(--muted);font-size:10px">Click to deselect</div>`;
     }
     tip.innerHTML=h; tip.style.display='block';
-    tip.style.left=(e.clientX+14)+'px'; tip.style.top=(e.clientY-10)+'px';
+    placeTip(tip,e.clientX,e.clientY);
   }).on('mouseleave',()=>tip.style.display='none')
     .on('click',(e,d)=>{
       e.stopPropagation();
@@ -2577,8 +2769,7 @@ async function drawGeo(){
         gt.innerHTML=`<span style="color:var(--muted);font-weight:600;">${info.n}</span>`;
       }
       gt.style.display='block';
-      gt.style.left=(ev.clientX+14)+'px';
-      gt.style.top=(ev.clientY-10)+'px';
+      placeTip(gt,ev.clientX,ev.clientY);
     })
     .on('mouseleave',()=>gt.style.display='none')
     .on('click',(ev,f)=>{
@@ -2725,6 +2916,22 @@ function togglePanel(){
 }
 
 // ═══════════════════════════════════════════════════════════════
+// MOBILE FILTER DRAWER
+// On narrow screens #panel becomes an off-canvas drawer (see CSS)
+// instead of the desktop push-column, so it's toggled separately.
+// ═══════════════════════════════════════════════════════════════
+function toggleMobilePanel(){
+  const panel=document.getElementById('panel');
+  const backdrop=document.getElementById('panel-backdrop');
+  const open=panel.classList.toggle('mobile-open');
+  backdrop.classList.toggle('show',open);
+}
+function closeMobilePanel(){
+  document.getElementById('panel').classList.remove('mobile-open');
+  document.getElementById('panel-backdrop').classList.remove('show');
+}
+
+// ═══════════════════════════════════════════════════════════════
 // ZOOM
 // ═══════════════════════════════════════════════════════════════
 function zBy(f){if(svgSel&&zoomB)svgSel.transition().duration(200).call(zoomB.scaleBy,f);}
@@ -2773,6 +2980,7 @@ function hideModal(){
 document.addEventListener('keydown',e=>{
   const bg=document.getElementById('modal-bg');
   if(e.key==='Escape'&&bg&&bg.style.display!=='none') hideModal();
+  if(e.key==='Escape') closeMobilePanel();
 });
 // ═══════════════════════════════════════════════════════════════
 // SHARE PERMALINK
@@ -2984,11 +3192,6 @@ document.addEventListener('DOMContentLoaded',()=>{
           <strong>Geo</strong> — world map of collaboration countries.</p>
         </div>
 
-        <div class="mcard" style="grid-column:1/-1;border-left:3px solid rgba(171,71,188,0.7);height:auto;overflow-y:visible;">
-          <h3 style="color:#ce93d8;"><span>★</span> Co-links <span style="font-size:9px;font-weight:400;color:var(--muted);margin-left:6px;">(enabled by default)</span></h3>
-          <p>Reveals <strong>direct connections between co-authors themselves</strong>, not just to the searched author. Uses <strong>community detection</strong> to cluster research groups visually — turning a star graph into a <strong>research community map</strong>. Toggle with the <span style="color:#ce93d8;font-weight:600;">★ Co-links</span> button in the top-right toolbar. Purple dashed lines = co-author links. Lower <em>Max links shown</em> in the sidebar for cleaner cluster separation.</p>
-        </div>
-
       </div>
     </div>
 
@@ -3013,13 +3216,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 
         <div class="mcard" style="grid-column:1/-1;height:auto;overflow-y:visible;">
           <h3><span>🔬</span> Community Detection</h3>
-          <p>With Co-links enabled, direct co-author-to-co-author edges are computed from shared papers. The <strong>Louvain algorithm</strong> — a modularity-maximising community detection method — is run on this graph to assign cluster membership, grouping researchers who frequently collaborate with each other into the same colour cluster. With Co-links off, clusters fall back to the primary research topic of shared papers as reported by OpenAlex, keeping colours stable across filter changes.</p>
+          <p>Direct co-author-to-co-author edges (co-links) are computed from shared papers. The <strong>Louvain algorithm</strong> — a modularity-maximising community detection method — is run on this graph to assign cluster membership, grouping researchers who frequently collaborate with each other into the same colour cluster.</p>
         </div>
 
         <div class="mcard" style="grid-column:1/-1;height:auto;overflow-y:visible;border-left:3px solid rgba(79,195,247,0.6);">
           <h3><span>🎯</span> Assumptions &amp; Definitions</h3>
           <p>Specific criteria worth knowing when interpreting the graph:</p>
           <p style="margin-top:6px;">
+          • <strong>Co-links</strong> are always-on direct connections between co-authors themselves — not just ties back to the searched researcher — shown as purple dashed lines and computed from shared papers. They form the edges that the <strong>Louvain</strong> community detection (see above) runs on to assign clusters. If a network has a lot of co-links, lower <em>Max links shown</em> in the sidebar — rendering too many at once can slow the graph down.<br><br>
           • <strong>Topic clusters</strong> reflect the primary topic of papers <em>shared</em> with the searched researcher — not that co-author's overall research focus across their whole career. A frequent collaborator's cluster can differ from what their own OpenAlex profile shows as their top topic.<br><br>
           • <strong>Citations</strong> (Citations view) size each node by that co-author's <strong>total lifetime citation count</strong> across all of their published work — not citations specific to papers shared with the searched researcher.<br><br>
           • <strong>Institution &amp; Country</strong> use each co-author's <em>last known</em> (most recent) affiliation on record in OpenAlex — a single snapshot, not a full affiliation history. Co-authors OpenAlex can't resolve an institution for appear under "Unknown / None."<br><br>
