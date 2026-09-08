@@ -3177,9 +3177,9 @@ document.addEventListener('DOMContentLoaded',()=>{
           <h3><span>🎛</span> Filters</h3>
           <p><strong>By default only the top ~100 strongest collaborations are shown</strong> to keep the graph readable — the threshold is set automatically. Adjust in the sidebar:<br><br>
           • <strong>Min. shared papers</strong> — lower to reveal more collaborators.<br>
-          • <strong>Year range</strong> &amp; <strong>Work type</strong> — narrow by time or publication type.<br>
-          • <strong>Institution</strong> — show only co-authors from specific institutions (appears after network loads).<br>
-          • <strong>Topic clusters</strong> — filter by detected research community.<br>
+          • <strong>Year range</strong> &amp; <strong>Work type</strong> — narrow by year or publication type.<br>
+          • <strong>Institution</strong> — show only co-authors from specific institutions.<br>
+          • <strong>Topic clusters</strong> — filter by detected research community (on shared papers).<br>
           • <strong>Byline filter</strong> — show only papers where the searched author's listed affiliation matches their current institution, isolating collaborations built at a specific career stage.<br><br>
           All filters update stats, charts, and open access breakdown together.</p>
         </div>
@@ -3188,7 +3188,7 @@ document.addEventListener('DOMContentLoaded',()=>{
           <h3><span>🗺</span> Views</h3>
           <p><strong>Network</strong> — co-author graph sized by shared papers.<br>
           <strong>Citations</strong> — nodes sized by co-author total citations.<br>
-          <strong>Funders</strong> — funding agency connections.<br>
+          <strong>Funders</strong> — funding agency connections (listed on publications).<br>
           <strong>Geo</strong> — world map of collaboration countries.</p>
         </div>
 
@@ -3201,7 +3201,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
         <div class="mcard" style="grid-column:1/-1;height:auto;overflow-y:visible;">
           <h3><span>📡</span> Data Source</h3>
-          <p>All publication and author data is fetched live from <a href="https://openalex.org" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">OpenAlex</a> — a free, open academic graph cataloguing <strong>474 million scholarly works</strong>. When you search a researcher, CoAuthra calls the OpenAlex REST API to retrieve their full publication list using cursor-based pagination (200 papers per request), then enriches each co-author with citation counts, institutions, and geographic data via batched author lookups.</p>
+          <p>All publication and author data is fetched live from <a href="https://openalex.org" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;">OpenAlex</a> — a free and open academic publication database. When you search a researcher, CoAuthra calls the OpenAlex REST API to retrieve their full publication list using cursor-based pagination (200 papers per request), then enriches each co-author with citation counts, institutions, and geographic data via batched author lookups.</p>
         </div>
 
         <div class="mcard" style="grid-column:1/-1;height:auto;overflow-y:visible;">
