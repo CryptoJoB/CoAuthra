@@ -23,6 +23,7 @@ if (window.location.hostname === 'scholarnet.net' ||
   --bg:#111318; --canvas:#0d0f14; --surface:#1a1d24; --surface2:#21242d;
   --border:#2a2d38; --border2:#363944;
   --accent:#4fc3f7; --accent-dim:rgba(79,195,247,0.13);
+  --purple:#ab47bc; --purple-bright:#ce93d8; --purple-dim:rgba(171,71,188,0.18);
   --red:#ef5350; --green:#66bb6a; --yellow:#ffca28; --orange:#ff7043;
   --text:#dde1ec; --text2:#9aa0b8; --muted:#565c78;
 }
@@ -112,6 +113,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
      padding:3px 9px;cursor:pointer;border-radius:3px;white-space:nowrap;transition:all .15s;}
 .tab:hover{border-color:var(--border2);color:var(--text);}
 .tab.on{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);}
+#tg.on,#tl.on,#ta.on{background:var(--purple-dim);border-color:var(--purple);color:var(--purple-bright);}
 .ibtn{background:transparent;border:1px solid var(--border);color:var(--text2);font-size:13px;
       width:27px;height:27px;display:flex;align-items:center;justify-content:center;
       cursor:pointer;border-radius:3px;flex-shrink:0;transition:all .15s;}
@@ -156,13 +158,13 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
          outline:none;border-radius:3px;margin-bottom:8px;}
 #lsearch:focus{border-color:var(--accent);}
 .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-#ltbl{width:100%;border-collapse:collapse;font-size:12px;}
-#ltbl th{text-align:left;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.07em;
+#ltbl,#atbl{width:100%;border-collapse:collapse;font-size:12px;}
+#ltbl th,#atbl th{text-align:left;color:var(--muted);font-size:10px;font-weight:600;letter-spacing:.07em;
          text-transform:uppercase;padding:4px 7px;border-bottom:1px solid var(--border);
          white-space:nowrap;cursor:pointer;user-select:none;}
-#ltbl th:hover{color:var(--text);}
-#ltbl td{padding:5px 7px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;}
-#ltbl tr:hover td{background:var(--surface);}
+#ltbl th:hover,#atbl th:hover{color:var(--text);}
+#ltbl td,#atbl td{padding:5px 7px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;}
+#ltbl tr:hover td,#atbl tr:hover td{background:var(--surface);}
 .tc{color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:11px;}
 .tm{color:var(--text2);}
 .oa-badge{font-size:9px;padding:1px 5px;border-radius:10px;font-weight:600;margin-left:4px;}
@@ -170,6 +172,44 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .oa-green{background:rgba(102,187,106,0.2);color:#66bb6a;}
 .oa-closed{background:rgba(86,92,120,0.2);color:#9aa0b8;}
 .ret-flag{color:var(--red);font-size:9px;font-weight:700;margin-left:4px;}
+
+/* ── AFFILIATIONS VIEW ── */
+#affview{display:none;flex:1;overflow-y:auto;padding:14px 18px;background:var(--canvas);}
+#aff-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;}
+#aff-author,#aff-search{background:var(--surface);border:1px solid var(--border);color:var(--text);
+         font-family:'IBM Plex Sans',sans-serif;font-size:12px;padding:4px 8px;
+         outline:none;border-radius:3px;}
+#aff-author{max-width:280px;}
+#aff-search{flex:1;min-width:180px;}
+#aff-author:focus,#aff-search:focus{border-color:var(--accent);}
+#aff-summary{font-size:11.5px;color:var(--muted);margin:0 0 8px;line-height:1.5;}
+.aff-name{max-width:360px;}
+#atbl .aff-row{cursor:pointer;}
+#atbl .aff-row.active td{background:var(--surface2);}
+#aff-detail{margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:5px;overflow:hidden;}
+#aff-detail-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);}
+#aff-detail-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.4;}
+#aff-detail-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+#aff-detail-close{background:none;border:1px solid var(--border2);color:var(--muted);border-radius:3px;padding:3px 8px;cursor:pointer;font-size:11px;}
+#aff-detail-close:hover{color:var(--text);border-color:var(--accent);}
+.aff-chart-scroll{width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;background:var(--canvas);
+  -webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x pan-y;
+  scrollbar-width:thin;scrollbar-color:var(--border2) transparent;}
+.aff-chart-scroll::-webkit-scrollbar{height:8px;}
+.aff-chart-scroll::-webkit-scrollbar-track{background:var(--canvas);}
+.aff-chart-scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+#aff-detail-chart{height:178px;display:block;max-width:none;}
+#aff-chart-hint{display:none;padding:5px 8px 7px;color:var(--muted);font-size:10.5px;
+  text-align:center;background:var(--canvas);border-top:1px solid var(--border);}
+#aff-papers{max-height:330px;overflow-y:auto;border-top:1px solid var(--border);}
+.aff-paper{display:grid;grid-template-columns:62px minmax(0,1fr)92px;gap:9px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:11.5px;line-height:1.45;}
+.aff-paper:last-child{border-bottom:none;}
+.aff-paper-year{color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:10.5px;}
+.aff-paper-title{color:var(--text);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.aff-paper-title:hover{color:var(--accent);text-decoration:underline;}
+.aff-paper-authors{display:block;color:var(--muted);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
+.aff-paper-cites{text-align:right;color:var(--text2);font-family:'IBM Plex Mono',monospace;font-size:10.5px;white-space:nowrap;}
+.aff-empty{padding:12px;color:var(--muted);font-size:11.5px;}
 
 /* ── GEO MAP VIEW ── */
 #geoview{display:none;flex:1;overflow:hidden;background:var(--canvas);position:relative;}
@@ -259,6 +299,20 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 #author-picker .ap-works{font-size:10.5px;color:var(--muted);font-family:'IBM Plex Mono',monospace;
   white-space:nowrap;flex-shrink:0;}
 #author-picker .ap-hint{padding:7px 12px;font-size:11px;color:var(--muted);font-style:italic;}
+#author-picker .ap-check{accent-color:var(--accent);width:14px;height:14px;flex-shrink:0;cursor:pointer;}
+#author-picker .ap-item.ap-selected{background:var(--accent-dim);}
+#author-picker .ap-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:7px 12px;border-top:1px solid var(--border);background:var(--surface2);}
+#author-picker .ap-count{font-size:11px;color:var(--text2);font-family:'IBM Plex Mono',monospace;}
+#author-picker .ap-load{background:var(--accent);color:#06080f;border:none;border-radius:3px;
+  font-family:'IBM Plex Sans',sans-serif;font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;}
+#author-picker .ap-load:disabled{opacity:.4;cursor:not-allowed;}
+#author-picker .ap-single{color:var(--accent);font-size:10.5px;font-family:'IBM Plex Mono',monospace;
+  white-space:nowrap;flex-shrink:0;cursor:pointer;}
+#author-picker .ap-section{padding:5px 12px 3px;font-size:10px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border);}
+#author-picker .ap-remove{color:var(--red);font-size:10.5px;font-family:'IBM Plex Mono',monospace;
+  white-space:nowrap;flex-shrink:0;cursor:pointer;}
 .swrap{position:relative;}
 .crow{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-bottom:3px;}
 .clbl{font-size:11.5px;color:var(--text2);flex:1;}
@@ -457,6 +511,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
   #ltbl th,#ltbl td{padding:7px 8px;}
   #ltbl{font-size:12px;}
 
+  /* ── Affiliations: keep the detail card inside the phone viewport and
+     make the year chart's horizontal scroll area explicit/touch-friendly ── */
+  #affview{padding:12px;overflow-x:hidden;}
+  #aff-controls{align-items:stretch;}
+  #aff-author{width:100%;max-width:none;flex:1 1 100%;font-size:16px;padding:8px 9px;}
+  #aff-search{flex:1 1 100%;min-width:0;font-size:16px;padding:8px 9px;}
+  #aff-detail{width:100%;max-width:100%;min-width:0;}
+  .aff-chart-scroll{overflow-x:scroll;border-bottom:1px solid var(--border);}
+  .aff-chart-scroll.has-overflow+#aff-chart-hint{display:block;}
+  .aff-paper{grid-template-columns:48px minmax(0,1fr)72px;gap:7px;padding:9px 10px;}
+  .aff-paper-cites{font-size:10px;}
+
   /* ── Welcome modal: full-screen, single column, no nested scroll ── */
   #modal-bg{padding:0;}
   #modal{
@@ -544,6 +610,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
     <div class="tabs">
       <button class="tab on" id="tg" onclick="setMainView('graph')">Graph</button>
       <button class="tab" id="tl" onclick="setMainView('list')">List</button>
+      <button class="tab" id="ta" onclick="setMainView('aff')">Affiliations</button>
     </div>
 
     <div class="sep"></div>
@@ -606,6 +673,42 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
       </tr></thead>
       <tbody id="lbody"></tbody>
     </table>
+    </div>
+  </div>
+
+  <!-- AFFILIATIONS VIEW -->
+  <div id="affview">
+    <div id="aff-controls">
+      <select id="aff-author" onchange="onAffAuthorChange(this.value)"></select>
+      <input type="text" id="aff-search" placeholder="Search institutions…" oninput="filterAffiliations(this.value)" />
+    </div>
+    <div id="aff-summary">Load one or more researchers to see affiliation counts from their papers.</div>
+    <div class="table-scroll">
+    <table id="atbl">
+      <thead><tr>
+        <th>#</th>
+        <th>Institution</th>
+        <th>Papers</th>
+        <th>Citations</th>
+        <th title="Share of all affiliation entries, so unfiltered shares add to 100%">Share</th>
+        <th>First year</th>
+        <th>Latest year</th>
+        <th>Country</th>
+      </tr></thead>
+      <tbody id="abody"></tbody>
+    </table>
+    </div>
+    <div id="aff-detail" style="display:none;">
+      <div id="aff-detail-head">
+        <div>
+          <div id="aff-detail-title"></div>
+          <div id="aff-detail-sub"></div>
+        </div>
+        <button id="aff-detail-close" onclick="clearAffDetail()">Close</button>
+      </div>
+      <div class="aff-chart-scroll"><svg id="aff-detail-chart"></svg></div>
+      <div id="aff-chart-hint">Swipe sideways to see every year</div>
+      <div id="aff-papers"></div>
     </div>
   </div>
 
@@ -732,7 +835,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;heigh
 // ═══════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════
-let allPapers=[], authorRec=null, coData=[];
+let allPapers=[], authorRec=null, authorRecs=[], coData=[];
+let mainAuthorIds=new Set(); // OpenAlex IDs for all selected researchers
+let selectedAuthors=new Map(); // persistent picker basket: OpenAlex ID → author record
+let pickerOutsideHandler=null; // single outside-click listener, replaced on every picker render
+let affAuthorId='all'; // affiliations tab: 'all' or a selected author ID
+let affRows=[]; // last computed affiliation rows for the affiliations tab
+let affTotalPapers=0; // total unique papers for the selected affiliation scope
+let affSelectedKey=null; // institution currently expanded in the affiliations tab
 let geoEnrich={}; // permanent country cache — never wiped by filters
 let topicColorMap={}; // topic name → stable cluster index, built once per search
 let vizMode='network', mainView='graph', searchMode='name';
@@ -862,6 +972,19 @@ function countryFillColor(cc){
   return `hsl(${hue.toFixed(1)},${sat}%,${lt}%)`;
 }
 
+function isMainAuthorId(id){
+  if(!id) return false;
+  if(mainAuthorIds.size) return mainAuthorIds.has(id);
+  return authorRec?.id===id;
+}
+function hasMainAuthor(auths){
+  return (auths||[]).some(a=>isMainAuthorId(a.author?.id));
+}
+function mainAuthorLabel(){
+  if(authorRecs.length>1) return `${authorRecs.length} researchers`;
+  return authorRec?.display_name||'Selected researcher';
+}
+
 // ═══════════════════════════════════════════════════════════════
 // SEARCH MODE
 // ═══════════════════════════════════════════════════════════════
@@ -870,7 +993,7 @@ function setMode(m){
   document.getElementById('m-name').classList.toggle('on',m==='name');
   document.getElementById('m-orcid').classList.toggle('on',m==='orcid');
   document.getElementById('qinput').placeholder=
-    m==='orcid'?'ORCID iD':'Researcher name';
+    m==='orcid'?'ORCID iD(s), comma/space separated':'Researcher name';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -886,8 +1009,10 @@ function setViz(m){
   document.getElementById('cvs').style.display=isGeo?'none':'';
   document.getElementById('geoview').style.display=isGeo?'flex':'none';
   document.getElementById('listview').style.display='none';
+  document.getElementById('affview').style.display='none';
   document.getElementById('tg').classList.add('on');
   document.getElementById('tl').classList.remove('on');
+  document.getElementById('ta').classList.remove('on');
   mainView='graph';
   // Funder search bar only makes sense on the funders tab
   const fsw=document.getElementById('funder-search-wrap');
@@ -914,9 +1039,12 @@ function setMainView(v){
   mainView=v;
   document.getElementById('tg').classList.toggle('on',v==='graph');
   document.getElementById('tl').classList.toggle('on',v==='list');
+  document.getElementById('ta').classList.toggle('on',v==='aff');
   if(vizMode==='geo'){document.getElementById('geoview').style.display=v==='graph'?'flex':'none';}
   else{document.getElementById('cvs').style.display=v==='graph'?'':'none';}
   document.getElementById('listview').style.display=v==='list'?'block':'none';
+  document.getElementById('affview').style.display=v==='aff'?'block':'none';
+  if(v==='aff') buildAffiliations();
 }
 
 function updateVLegend(){
@@ -1080,15 +1208,25 @@ async function doSearch(){
 
   try{
     if(searchMode==='orcid'){
-      // ORCID is unambiguous — load directly
-      const orcid=q.replace(/^.*orcid\.org\//,'').trim();
+      // ORCID is unambiguous — load directly. Multiple iDs may be pasted with
+      // commas, semicolons, spaces, or newlines between them.
+      const orcids=[...new Set(q.split(/[\s,;]+/)
+        .map(x=>x.replace(/^.*orcid\.org\//,'').trim())
+        .filter(Boolean))];
       showStatus('<div class="ring"></div>Searching OpenAlex…');
-      const r=await fetch(`https://api.openalex.org/authors?filter=orcid:${encodeURIComponent(orcid)}&per_page=1&select=id,display_name,orcid,works_count,cited_by_count,last_known_institutions,affiliations`);
-      const d=await r.json();
-      if(!d.results?.length){showStatus('<span style="color:var(--red)">No researcher found.</span>');return;}
-      await loadAuthor(d.results[0]);
+      const recs=[], missing=[];
+      for(const orcid of orcids){
+        const r=await fetch(`https://api.openalex.org/authors?filter=orcid:${encodeURIComponent(orcid)}&per_page=1&select=id,display_name,orcid,works_count,cited_by_count,last_known_institutions,affiliations`);
+        const d=await r.json();
+        if(d.results?.length) recs.push(d.results[0]);
+        else missing.push(orcid);
+      }
+      if(!recs.length){showStatus('<span style="color:var(--red)">No researcher found.</span>');return;}
+      if(missing.length) showStatus(`<span style="color:var(--yellow)">Loaded ${recs.length}; not found: ${missing.join(', ')}</span>`);
+      selectedAuthors.clear();
+      await loadAuthors(recs);
     } else {
-      // Name search — show disambiguation picker
+      // Name search — show disambiguation picker with multi-select
       await showAuthorPicker(q);
     }
   }catch(e){
@@ -1101,69 +1239,140 @@ async function doSearch(){
 
 async function showAuthorPicker(q){
   showStatus('<div class="ring"></div>Searching OpenAlex…');
-  const r=await fetch(`https://api.openalex.org/authors?search=${encodeURIComponent(q)}&per_page=8&select=id,display_name,orcid,works_count,cited_by_count,last_known_institutions,affiliations`);
+  const r=await fetch(`https://api.openalex.org/authors?search=${encodeURIComponent(q)}&per_page=10&select=id,display_name,orcid,works_count,cited_by_count,last_known_institutions,affiliations`);
   const d=await r.json();
   const results=d.results||[];
-  const picker=document.getElementById('author-picker');
 
-  if(!results.length){
+  if(!results.length&&!selectedAuthors.size){
     showStatus('<span style="color:var(--red)">No researcher found. Check spelling or try ORCID.</span>');
-    picker.style.display='none';
+    document.getElementById('author-picker').style.display='none';
     return;
   }
 
-  // Single exact match — skip the picker
+  // Never auto-load from name search. A single strong match is added to the
+  // selection basket instead, so the user can search again and add more people
+  // before loading the combined network.
   if(results.length===1){
-    hideStatus();
-    await loadAuthor(results[0]);
-    return;
+    const a=results[0];
+    const already=selectedAuthors.has(a.id);
+    if(!already) selectedAuthors.set(a.id,a);
+    showStatus(`<div style="font-size:13px;color:var(--text2);"><strong>${a.display_name}</strong> ${already?'is already selected':'added to the selection'}. Search another researcher to add more, or press Load selected.</div>`);
+  } else {
+    showStatus('<div style="font-size:13px;color:var(--text2);">Tick researchers to add them to the selection — search again to add more — then Load selected. Use “only” to load just one person.</div>');
   }
 
-  showStatus('<div style="font-size:13px;color:var(--text2);">Select the correct researcher above ↑</div>');
+  renderAuthorPicker(results);
+}
 
-  picker.innerHTML=results.map((a,i)=>{
+function renderAuthorPicker(results){
+  const picker=document.getElementById('author-picker');
+  picker._results=results||[];
+  picker.style.opacity='';
+  picker.style.pointerEvents='';
+
+  const selectedRows=[...selectedAuthors.values()].map(a=>{
+    const {institution}=bestInstitution(a);
+    return `<div class="ap-item ap-selected">
+      <div style="flex:1;min-width:0;">
+        <span class="ap-name">${a.display_name}</span>
+        <span class="ap-inst">${institution||'Unknown institution'}</span>
+      </div>
+      <span class="ap-remove" onclick="event.stopPropagation();unpickAuthor('${a.id}')">remove</span>
+    </div>`;
+  }).join('');
+
+  const resultRows=(results||[]).map((a,i)=>{
     const {institution}=bestInstitution(a);
     const inst=institution||'Unknown institution';
     const works=(a.works_count||0).toLocaleString();
+    const checked=selectedAuthors.has(a.id);
     const orcidStr=a.orcid
       ?`<span style="font-size:9.5px;color:var(--muted);font-family:'IBM Plex Mono',monospace;display:block;">${a.orcid.replace('https://orcid.org/','')}</span>`
       :'';
-    return `<div class="ap-item" onclick="selectAuthor(${i})">
-      <div style="flex:1;min-width:0;">
+    return `<div class="ap-item ${checked?'ap-selected':''}" id="ap-item-${i}" onclick="togglePickerAuthor(${i},event)">
+      <input type="checkbox" class="ap-check" id="ap-check-${i}" ${checked?'checked':''} onclick="event.stopPropagation();togglePickerAuthor(${i},event)"/>
+      <div style="flex:1;min-width:0;cursor:pointer;" title="Add or remove this researcher">
         <span class="ap-name">${a.display_name}</span>
         ${orcidStr}
         <span class="ap-inst">${inst}</span>
       </div>
+      <span class="ap-single" title="Load only this researcher" onclick="event.stopPropagation();selectAuthor(${i})">only</span>
       <span class="ap-works">${works} works</span>
     </div>`;
-  }).join('')+
-  `<div class="ap-hint">Not finding the right person? Switch to ORCID search for a precise match.</div>`;
+  }).join('');
 
-  picker._results=results;
+  const n=selectedAuthors.size;
+  picker.innerHTML=
+    (n?`<div class="ap-section">Selected researchers</div>${selectedRows}`:'')+
+    ((results||[]).length?`<div class="ap-section">Search results</div>${resultRows}`:'<div class="ap-hint">No new matches — your selected researchers are still listed above.</div>')+
+    `<div class="ap-actions">
+      <span class="ap-count" id="ap-count">${n} selected</span>
+      <button class="ap-load" id="ap-load" ${n?'':'disabled'} onclick="loadSelectedAuthors()">${n>1?`Load ${n} researchers`:'Load selected'}</button>
+    </div>
+    <div class="ap-hint">The basket stays open while researchers are selected. Click a row to add/remove it, or use “only” to load one researcher.</div>`;
+
   picker.style.display='block';
 
-  // Close if user clicks outside
+  // Close on outside click only when the basket is empty. While researchers are
+  // selected, keep the picker visible so an accidental canvas/sidebar click cannot
+  // wipe the current result list mid-selection.
+  if(pickerOutsideHandler) document.removeEventListener('click',pickerOutsideHandler);
+  pickerOutsideHandler=e=>{
+    if(!picker.contains(e.target)&&e.target.id!=='qinput'&&e.target.id!=='sbtn'&&!selectedAuthors.size){
+      picker.style.display='none';
+      hideStatus();
+      document.removeEventListener('click',pickerOutsideHandler);
+      pickerOutsideHandler=null;
+    }
+  };
   setTimeout(()=>{
-    document.addEventListener('click',function handler(e){
-      if(!picker.contains(e.target)&&e.target.id!=='qinput'&&e.target.id!=='sbtn'){
-        picker.style.display='none';
-        hideStatus();
-        document.removeEventListener('click',handler);
-      }
-    });
+    if(pickerOutsideHandler) document.addEventListener('click',pickerOutsideHandler);
   },0);
 }
 
-async function selectAuthor(idx){
+function togglePickerAuthor(idx,ev){
   const picker=document.getElementById('author-picker');
-  const author=picker._results?.[idx];
+  const author=picker?._results?.[idx];
   if(!author) return;
-  picker.style.display='none';
+  const cb=document.getElementById(`ap-check-${idx}`);
+  const fromCheckbox=ev?.target?.classList?.contains('ap-check');
+  const willSelect=fromCheckbox ? !!cb?.checked : !selectedAuthors.has(author.id);
+  if(willSelect) selectedAuthors.set(author.id,author);
+  else selectedAuthors.delete(author.id);
+  renderAuthorPicker(picker._results||[]);
+}
+
+function unpickAuthor(id){
+  selectedAuthors.delete(id);
+  const picker=document.getElementById('author-picker');
+  renderAuthorPicker(picker?._results||[]);
+  if(!selectedAuthors.size&&!(picker?._results||[]).length) picker.style.display='none';
+}
+
+async function loadSelectedAuthors(){
+  const selected=[...selectedAuthors.values()];
+  if(!selected.length) return;
+  const picker=document.getElementById('author-picker');
+  const loadBtn=document.getElementById('ap-load');
+  if(loadBtn){loadBtn.disabled=true;loadBtn.textContent='Loading…';}
+  picker.style.opacity='0.65';
+  picker.style.pointerEvents='none';
   const btn=document.getElementById('sbtn');
   btn.disabled=true; btn.textContent='Loading…';
   try{
-    await loadAuthor(author);
+    const ok=await loadAuthors(selected);
+    if(ok){
+      selectedAuthors.clear();
+      picker.style.display='none';
+    }else{
+      picker.style.opacity='';
+      picker.style.pointerEvents='';
+      if(loadBtn){loadBtn.disabled=false;loadBtn.textContent=selected.length>1?`Load ${selected.length} researchers`:'Load selected';}
+    }
   }catch(e){
+    picker.style.opacity='';
+    picker.style.pointerEvents='';
+    if(loadBtn){loadBtn.disabled=false;loadBtn.textContent=selected.length>1?`Load ${selected.length} researchers`:'Load selected';}
     showStatus(`<span style="color:var(--red)">Error: ${e.message}</span>`);
     console.error(e);
   }finally{
@@ -1171,37 +1380,83 @@ async function selectAuthor(idx){
   }
 }
 
-async function loadAuthor(rec){
-  authorRec=rec;
-  showStatus('<div class="ring"></div>Loading publications…');
-  document.getElementById('graph').innerHTML='';
+async function selectAuthor(idx){
+  const picker=document.getElementById('author-picker');
+  const author=picker._results?.[idx];
+  if(!author) return;
+  picker.style.opacity='0.65';
+  picker.style.pointerEvents='none';
+  const btn=document.getElementById('sbtn');
+  btn.disabled=true; btn.textContent='Loading…';
+  try{
+    const ok=await loadAuthors([author]);
+    if(ok){
+      selectedAuthors.clear();
+      picker.style.display='none';
+    }else{
+      picker.style.opacity='';
+      picker.style.pointerEvents='';
+    }
+  }catch(e){
+    picker.style.opacity='';
+    picker.style.pointerEvents='';
+    showStatus(`<span style="color:var(--red)">Error: ${e.message}</span>`);
+    console.error(e);
+  }finally{
+    btn.disabled=false; btn.textContent='Search';
+  }
+}
+
+async function loadAuthors(recs){
+  authorRecs=(recs||[]).filter(Boolean);
+  if(!authorRecs.length) return false;
+  authorRec=authorRecs[0];
+  mainAuthorIds=new Set(authorRecs.map(a=>a.id));
+  affAuthorId=authorRecs.length>1?'all':authorRec.id;
+  showStatus(`<div class="ring"></div>Loading publications for ${authorRecs.length} researcher${authorRecs.length>1?'s':''}…`);
+  if(sim){sim.stop();sim=null;}
   allPapers=[]; coData=[]; geoEnrich={}; _worldCache=null; enabledInstitutions=null; knownInstitutions=new Set(); topicColorMap={};
   instDefaultForNew=true; knownClusters=new Set(); clusterFilterTouched=false;
-  bylineFilterEnabled=false; currentInstId=null;
+  bylineFilterEnabled=false; currentInstId=null; affSelectedKey=null;
+  // Every new load starts from the standard network graph. This also restores
+  // the graph canvas to measurable dimensions before drawNetwork calculates
+  // the force layout (loading while on List/Affiliations previously hid it).
+  setViz('network');
+  document.getElementById('graph').innerHTML='';
 
-  const authorId=authorRec.id.replace('https://openalex.org/','');
-
-  allPapers=await fetchAllWorks(authorId);
-  if(!allPapers.length){showStatus('<span style="color:var(--red)">No publications found.</span>');return;}
+  // Fetch every selected researcher and merge into one de-duplicated corpus.
+  const seenWorks=new Set();
+  for(let i=0;i<authorRecs.length;i++){
+    const rec=authorRecs[i];
+    showStatus(`<div class="ring"></div>Loading publications… ${i+1} / ${authorRecs.length} — ${rec.display_name||''}`);
+    const authorId=rec.id.replace('https://openalex.org/','');
+    const works=await fetchAllWorks(authorId);
+    works.forEach(p=>{
+      if(p?.id&&!seenWorks.has(p.id)){seenWorks.add(p.id);allPapers.push(p);}
+    });
+  }
+  if(!allPapers.length){showStatus('<span style="color:var(--red)">No publications found.</span>');return false;}
 
   // Build stable topic→colour map from ALL papers once
   const topicFreq={};
   allPapers.forEach(p=>{ const t=p.topics?.[0]?.display_name; if(t) topicFreq[t]=(topicFreq[t]||0)+1; });
   Object.keys(topicFreq).sort((a,b)=>topicFreq[b]-topicFreq[a]).forEach((t,i)=>{ topicColorMap[t]=i%COLORS.length; });
 
-  // Determine current institution ID for byline filter
+  // Determine current institution ID for byline filter (single-researcher only)
   currentInstId=null;
-  const affs=authorRec.affiliations;
-  if(affs?.length){
-    let bestYear=-1;
-    affs.forEach(a=>{
-      const id=a.institution?.id;
-      if(!id) return;
-      const yr=a.years?.length?Math.max(...a.years):0;
-      if(yr>bestYear){bestYear=yr;currentInstId=id;}
-    });
+  if(authorRecs.length===1){
+    const affs=authorRec.affiliations;
+    if(affs?.length){
+      let bestYear=-1;
+      affs.forEach(a=>{
+        const id=a.institution?.id;
+        if(!id) return;
+        const yr=a.years?.length?Math.max(...a.years):0;
+        if(yr>bestYear){bestYear=yr;currentInstId=id;}
+      });
+    }
+    if(!currentInstId) currentInstId=authorRec.last_known_institutions?.[0]?.id||null;
   }
-  if(!currentInstId) currentInstId=authorRec.last_known_institutions?.[0]?.id||null;
   buildBylineToggle();
 
   initYearSliders();
@@ -1230,16 +1485,23 @@ async function loadAuthor(rec){
   buildClusterFilters();
   buildSidebar();
   buildListData();
+  buildAffiliations();
   fetchCoauthorCitations(coData.slice(0,100));
   redraw();
   // Enable share + export now that a network is loaded
   document.getElementById('share-btn').disabled=false;
   document.getElementById('export-btn').disabled=false;
-  // Update URL so current author is permalinkable without pushing a new history entry
+  // Update URL so current selection is permalinkable without pushing a new history entry
   // (skipped/guarded for file:// pages — the History API can't target file: URLs)
-  const aid=authorRec.id.replace('https://openalex.org/','');
-  try{ history.replaceState(null,'',`?author=${aid}`); }catch(e){/* not supported on file:// */}
+  const ids=authorRecs.map(a=>a.id.replace('https://openalex.org/',''));
+  try{
+    if(ids.length>1) history.replaceState(null,'',`?authors=${ids.join(',')}`);
+    else history.replaceState(null,'',`?author=${ids[0]}`);
+  }catch(e){/* not supported on file:// */}
+  return true;
 }
+
+function loadAuthor(rec){return loadAuthors([rec]);}
 
 // ═══════════════════════════════════════════════════════════════
 // YEAR SLIDERS INIT
@@ -1296,7 +1558,6 @@ function toggleType(t,el){
 // BUILD CO-AUTHOR DATA
 // ═══════════════════════════════════════════════════════════════
 function buildCoData(){
-  const mainId=authorRec.id;
 
   // Snapshot enrichment from current coData before rebuilding
   const prevEnrich={};
@@ -1311,14 +1572,14 @@ function buildCoData(){
   const allFreq={};
   allPapers.forEach(paper=>{
     const auths=paper.authorships||[];
-    if(!auths.some(a=>a.author?.id===mainId)) return;
+    if(!hasMainAuthor(auths)) return;
     auths.forEach(a=>{
       const id=a.author?.id,nm=a.author?.display_name;
-      if(!id||!nm||id===mainId) return;
+      if(!id||!nm||isMainAuthorId(id)) return;
       if(!allFreq[id]){
         const instFromAuth=a.institutions?.[0]?.display_name||null;
         allFreq[id]={id,name:nm,count:0,strength:0,yearSum:0,yc:0,
-          citations:0,country:null,institution:instFromAuth};
+          citations:0,country:null,institution:instFromAuth,perMain:{}};
       }
     });
   });
@@ -1327,16 +1588,25 @@ function buildCoData(){
   const filtFreq={};
   getBylineFilteredPapers().forEach(paper=>{
     const auths=paper.authorships||[];
-    if(!auths.some(a=>a.author?.id===mainId)) return;
-    const co=auths.length-1;
+    if(!hasMainAuthor(auths)) return;
+    const mainIdsOnPaper=[...new Set(auths.map(a=>a.author?.id).filter(id=>isMainAuthorId(id)))];
+    const co=auths.filter(a=>!isMainAuthorId(a.author?.id)).length;
     const yr=paper.publication_year;
     auths.forEach(a=>{
       const id=a.author?.id;
-      if(!id||id===mainId||!allFreq[id]) return;
-      if(!filtFreq[id]) filtFreq[id]={count:0,strength:0,yearSum:0,yc:0};
-      filtFreq[id].count++;
-      filtFreq[id].strength+=co>0?1/co:1;
-      if(yr){filtFreq[id].yearSum+=yr;filtFreq[id].yc++;}
+      if(!id||isMainAuthorId(id)||!allFreq[id]) return;
+      if(!filtFreq[id]) filtFreq[id]={count:0,strength:0,yearSum:0,yc:0,perMain:{}};
+      const f=filtFreq[id];
+      f.count++;
+      f.strength+=co>0?1/co:1;
+      if(yr){f.yearSum+=yr;f.yc++;}
+      // Keep the relationship to each selected researcher separate so the
+      // network can draw one edge per selected person instead of one merged hub.
+      mainIdsOnPaper.forEach(mid=>{
+        if(!f.perMain[mid]) f.perMain[mid]={count:0,strength:0};
+        f.perMain[mid].count++;
+        f.perMain[mid].strength+=co>0?1/co:1;
+      });
     });
   });
 
@@ -1346,7 +1616,8 @@ function buildCoData(){
     return {...c,
       count:f?f.count:0,
       strength:f?f.strength:0,
-      avgYear:f&&f.yc?Math.round(f.yearSum/f.yc):null
+      avgYear:f&&f.yc?Math.round(f.yearSum/f.yc):null,
+      perMain:f?f.perMain:{}
     };
   }).sort((a,b)=>b.count-a.count);
 
@@ -1406,6 +1677,7 @@ function getFilteredPapers(){
 // call this instead of getFilteredPapers so the byline filter cascades everywhere.
 function getBylineFilteredPapers(){
   const base=getFilteredPapers();
+  if(authorRecs.length>1) return base;
   if(!bylineFilterEnabled||!currentInstId) return base;
   const mainId=authorRec?.id;
   return base.filter(p=>{
@@ -1418,7 +1690,7 @@ function getBylineFilteredPapers(){
 function buildBylineToggle(){
   const sec=document.getElementById('byline-sec');
   if(!sec) return;
-  if(!currentInstId){sec.style.display='none';return;}
+  if(authorRecs.length>1||!currentInstId){sec.style.display='none';return;}
   // Count papers where the author's byline matches current institution
   const mainId=authorRec?.id;
   const matching=allPapers.filter(p=>{
@@ -1461,7 +1733,7 @@ function getClusterFilteredPapers(){
   const mainId=authorRec?.id;
   return getBylineFilteredPapers().filter(p=>{
     const auths=p.authorships||[];
-    return auths.some(a=>a.author?.id&&a.author.id!==mainId&&visIds.has(a.author.id));
+    return auths.some(a=>a.author?.id&&!isMainAuthorId(a.author.id)&&visIds.has(a.author.id));
   });
 }
 
@@ -1469,17 +1741,16 @@ function getClusterFilteredPapers(){
 // CLUSTERING (topic-based)
 // ═══════════════════════════════════════════════════════════════
 function assignClusters(){
-  const mainId=authorRec.id;
   const at={};
   // Use allPapers so every co-author gets a topic regardless of active filters
   allPapers.forEach(p=>{
     const auths=p.authorships||[];
-    if(!auths.some(a=>a.author?.id===mainId)) return;
+    if(!hasMainAuthor(auths)) return;
     const topic=p.topics?.[0]?.display_name;
     if(!topic) return;
     auths.forEach(a=>{
       const id=a.author?.id;
-      if(!id||id===mainId) return;
+      if(!id||isMainAuthorId(id)) return;
       if(!at[id]) at[id]={};
       at[id][topic]=(at[id][topic]||0)+1;
     });
@@ -1517,20 +1788,24 @@ function updateStats(){
   const isFiltered=basePapers.length<allPapers.length;
   const filteredCites=basePapers.reduce((s,p)=>s+(p.cited_by_count||0),0);
 
-  const orcidLine=authorRec.orcid
+  const multi=authorRecs.length>1;
+  const selectedNames=authorRecs.map(a=>a.display_name).join(' · ');
+  const orcidLine=!multi&&authorRec.orcid
     ?`<div class="srow"><span class="slbl">ORCID</span><span class="sval" style="font-size:10px">${authorRec.orcid.replace('https://orcid.org/','')}</span></div>`:'';
   const {institution:instName}=bestInstitution(authorRec);
-  const instLine=instName
+  const instLine=!multi&&instName
     ?`<div class="srow"><span class="slbl">Institution</span><span class="sval" style="font-size:10px;max-width:135px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${instName}">${instName}</span></div>`:'';
+  const totalPubs=multi?allPapers.length:(authorRec.works_count||allPapers.length);
+  const totalCites=multi?allPapers.reduce((sum,p)=>sum+(p.cited_by_count||0),0):(authorRec.cited_by_count||0);
 
   document.getElementById('stats').innerHTML=`
-    <div class="srow"><span class="slbl">Researcher</span>
-      <span class="sval" style="max-width:135px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px">${authorRec.display_name}</span></div>
+    <div class="srow"><span class="slbl">${multi?'Researchers':'Researcher'}</span>
+      <span class="sval" style="max-width:135px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px" title="${selectedNames}">${multi?`${authorRecs.length} selected`:authorRec.display_name}</span></div>
     ${orcidLine}
     ${instLine}
-    <div class="srow"><span class="slbl">Total publications</span><span class="sval">${(authorRec.works_count||allPapers.length).toLocaleString()}</span></div>
+    <div class="srow"><span class="slbl">${multi?'Unique loaded papers':'Total publications'}</span><span class="sval">${totalPubs.toLocaleString()}</span></div>
     <div class="srow"><span class="slbl">${isFiltered?'Filtered papers':'Loaded papers'}</span><span class="sval" style="${isFiltered?'color:var(--yellow)':''}">${basePapers.length.toLocaleString()}${isFiltered?` / ${allPapers.length}`:''}</span></div>
-    <div class="srow"><span class="slbl">${isFiltered?'Filtered citations':'Total citations'}</span><span class="sval" style="${isFiltered?'color:var(--yellow)':''}">${isFiltered?filteredCites.toLocaleString():(authorRec.cited_by_count||0).toLocaleString()}</span></div>
+    <div class="srow"><span class="slbl">${isFiltered?'Filtered citations':'Total citations'}</span><span class="sval" style="${isFiltered?'color:var(--yellow)':''}">${isFiltered?filteredCites.toLocaleString():totalCites.toLocaleString()}</span></div>
     <div class="srow"><span class="slbl">Unique co-authors</span><span class="sval" style="color:#ab47bc">${totalVisible}</span></div>
     <div class="srow"><span class="slbl">Co-authors in map (≥${minLinks} papers)</span><span class="sval" style="color:#ab47bc">${vis}</span></div>
   `;
@@ -1675,6 +1950,307 @@ function buildJournals(){
     <div class="jrow"><span class="jname" title="${j}">${j.length>28?j.slice(0,26)+'…':j}</span><span class="jct">${ct}</span></div>
   `).join('');
   document.getElementById('journals-sec').style.display='block';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AFFILIATIONS TAB
+// Counts papers by the affiliation(s) listed on each selected researcher's
+// own authorship line. This is career-wide (all loaded papers), independent
+// of the graph's year/type/cluster display filters.
+// ═══════════════════════════════════════════════════════════════
+function computeAffiliations(){
+  if(!allPapers.length||!authorRecs.length) return {rows:[],total:0,label:''};
+  const useAll=affAuthorId==='all'&&authorRecs.length>1;
+  const ids=new Set(useAll?authorRecs.map(a=>a.id):[affAuthorId||authorRec.id]);
+  const label=useAll?`All selected (${authorRecs.length})`:(authorRecs.find(a=>a.id===affAuthorId)?.display_name||authorRec.display_name);
+  const instMap={};
+  let total=0;
+
+  allPapers.forEach(p=>{
+    const mine=(p.authorships||[]).filter(a=>ids.has(a.author?.id));
+    if(!mine.length) return;
+    total++;
+    const seenOnPaper=new Set();
+    const yr=p.publication_year||null;
+    const cites=p.cited_by_count||0;
+    mine.forEach(a=>{
+      (a.institutions||[]).forEach(inst=>{
+        const key=inst.id||inst.display_name;
+        if(!key||seenOnPaper.has(key)) return;
+        seenOnPaper.add(key);
+        if(!instMap[key]) instMap[key]={key,name:inst.display_name||'Unknown institution',country:inst.country_code||'',count:0,citations:0,first:null,last:null};
+        const row=instMap[key];
+        row.count++;
+        row.citations+=cites;
+        if(yr){row.first=row.first?Math.min(row.first,yr):yr;row.last=row.last?Math.max(row.last,yr):yr;}
+      });
+    });
+    if(!seenOnPaper.size){
+      const key='__no_affiliation__';
+      if(!instMap[key]) instMap[key]={key,name:'No affiliation listed on paper',country:'',count:0,citations:0,first:null,last:null,none:true};
+      const row=instMap[key];
+      row.count++;
+      row.citations+=cites;
+      if(yr){row.first=row.first?Math.min(row.first,yr):yr;row.last=row.last?Math.max(row.last,yr):yr;}
+    }
+  });
+
+  const rows=Object.values(instMap).sort((a,b)=>b.count-a.count||b.citations-a.citations||a.name.localeCompare(b.name));
+  return {rows,total,label};
+}
+
+function buildAffiliations(){
+  const sel=document.getElementById('aff-author');
+  if(sel){
+    const opts=[];
+    if(authorRecs.length>1) opts.push(`<option value="all">All selected (${authorRecs.length})</option>`);
+    authorRecs.forEach(a=>opts.push(`<option value="${a.id}">${a.display_name}</option>`));
+    sel.innerHTML=opts.join('');
+    sel.style.display=authorRecs.length>1?'':'none';
+    if(authorRecs.length>1&&![...sel.options].some(o=>o.value===affAuthorId)) affAuthorId='all';
+    if(authorRecs.length===1) affAuthorId=authorRec.id;
+    sel.value=affAuthorId;
+  }
+  const {rows,total,label}=computeAffiliations();
+  affRows=rows;
+  affTotalPapers=total;
+  if(affSelectedKey&&!rows.some(r=>r.key===affSelectedKey)) affSelectedKey=null;
+  const summary=document.getElementById('aff-summary');
+  if(summary){
+    summary.innerHTML=rows.length
+      ? `<strong style="color:var(--text)">${label}</strong> · ${total.toLocaleString()} paper${total===1?'':'s'} · ${rows.length} affiliation${rows.length===1?'':'s'} <span style="color:var(--muted)">(share = share of affiliation entries, totalling 100% · click an institution for yearly papers and citations)</span>`
+      : 'No affiliation data found on the loaded papers.';
+  }
+  renderAffiliations(affRows);
+  if(affSelectedKey) renderAffDetail(affRows.find(r=>r.key===affSelectedKey));
+  else document.getElementById('aff-detail').style.display='none';
+}
+
+function renderAffiliations(rows){
+  const body=document.getElementById('abody');
+  if(!body) return;
+  // Papers may carry multiple affiliations, so paper-count shares can exceed
+  // 100%. Use affiliation entries as the denominator; unfiltered shares then
+  // add to exactly 100% (allowing for rounding).
+  const shareTotal=Math.max(1,affRows.reduce((sum,r)=>sum+r.count,0));
+  body.innerHTML=rows.length?rows.map((r,i)=>{
+    const enc=encodeURIComponent(r.key);
+    return `
+    <tr class="aff-row ${r.key===affSelectedKey?'active':''}" onclick="showAffInstitution(decodeURIComponent('${enc}'))">
+      <td class="tm">${i+1}</td>
+      <td class="aff-name" title="${escHTML(r.name)}">${escHTML(r.name)}</td>
+      <td class="tc">${r.count.toLocaleString()}</td>
+      <td class="tc">${r.citations.toLocaleString()}</td>
+      <td class="tm">${(r.count/shareTotal*100).toFixed(1)}%</td>
+      <td class="tm">${r.first||'—'}</td>
+      <td class="tm">${r.last||'—'}</td>
+      <td class="tm">${r.country||'—'}</td>
+    </tr>`;
+  }).join('')
+    :'<tr><td class="tm" colspan="8">No affiliation rows to show.</td></tr>';
+}
+
+function onAffAuthorChange(v){
+  affAuthorId=v;
+  affSelectedKey=null;
+  buildAffiliations();
+}
+
+function filterAffiliations(q){
+  const f=(q||'').trim().toLowerCase();
+  renderAffiliations(f?affRows.filter(r=>(r.name||'').toLowerCase().includes(f)||(r.country||'').toLowerCase().includes(f)):affRows);
+}
+
+function showAffInstitution(key){
+  affSelectedKey=key;
+  const q=document.getElementById('aff-search')?.value||'';
+  filterAffiliations(q);
+  renderAffDetail(affRows.find(r=>r.key===key));
+}
+
+function clearAffDetail(){
+  affSelectedKey=null;
+  document.getElementById('aff-detail').style.display='none';
+  const q=document.getElementById('aff-search')?.value||'';
+  filterAffiliations(q);
+}
+
+function escHTML(v){
+  return String(v??'').replace(/[&<>"']/g,ch=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[ch]));
+}
+
+// Return the selected researchers' papers carrying a given byline affiliation.
+// In combined mode, a paper appears once even if multiple selected researchers
+// listed the same institution on it.
+function getAffiliationPapers(key){
+  const useAll=affAuthorId==='all'&&authorRecs.length>1;
+  const ids=new Set(useAll?authorRecs.map(a=>a.id):[affAuthorId||authorRec.id]);
+  const out=[];
+  allPapers.forEach(p=>{
+    const mine=(p.authorships||[]).filter(a=>ids.has(a.author?.id));
+    if(!mine.length) return;
+    const matches=key==='__no_affiliation__'
+      ? mine.some(a=>!(a.institutions||[]).length)
+      : mine.some(a=>(a.institutions||[]).some(inst=>(inst.id||inst.display_name)===key));
+    if(!matches) return;
+    const names=mine.map(a=>authorRecs.find(r=>r.id===a.author?.id)?.display_name||a.author?.display_name).filter(Boolean);
+    out.push({
+      id:p.id,
+      title:p.display_name||p.title||'Untitled work',
+      year:p.publication_year||null,
+      citations:p.cited_by_count||0,
+      authors:[...new Set(names)]
+    });
+  });
+  return out.sort((a,b)=>(b.year||0)-(a.year||0)||b.citations-a.citations||a.title.localeCompare(b.title));
+}
+
+function renderAffDetail(row){
+  const detail=document.getElementById('aff-detail');
+  if(!detail||!row){if(detail) detail.style.display='none';return;}
+  const papers=getAffiliationPapers(row.key);
+  const citations=papers.reduce((sum,p)=>sum+p.citations,0);
+  document.getElementById('aff-detail-title').textContent=row.name;
+  document.getElementById('aff-detail-sub').textContent=
+    `${papers.length.toLocaleString()} paper${papers.length===1?'':'s'} · ${citations.toLocaleString()} citation${citations===1?'':'s'}${row.first?` · ${row.first}–${row.last}`:''}`;
+  detail.style.display='block';
+  drawAffYearChart(papers);
+  renderAffPaperList(papers);
+}
+
+function drawAffYearChart(papers){
+  const svg=d3.select('#aff-detail-chart');
+  svg.selectAll('*').remove();
+  const wrap=document.querySelector('.aff-chart-scroll');
+  const hint=document.getElementById('aff-chart-hint');
+  const isMobile=window.matchMedia('(max-width:900px)').matches;
+  const measuredW=wrap?.clientWidth||document.getElementById('affview').clientWidth-36||800;
+  const containerW=Math.max(isMobile?240:320,Math.floor(measuredW));
+  const H=178, m={t:18,r:12,b:44,l:38};
+  const withYears=papers.filter(p=>p.year);
+  if(!withYears.length){
+    wrap?.classList.remove('has-overflow');
+    if(hint) hint.textContent='';
+    svg.attr('width',containerW).attr('height',H).style('width',`${containerW}px`);
+    svg.append('text')
+      .attr('x',containerW/2).attr('y',H/2)
+      .attr('text-anchor','middle')
+      .attr('fill','var(--muted)')
+      .attr('font-size',11)
+      .text('No publication years available');
+    return;
+  }
+
+  // Use every calendar year in the range, including zero-publication years.
+  // This preserves the time scale and prevents a couple of sparse years from
+  // being stretched across the whole chart.
+  const stats=new Map(d3.rollups(withYears,
+    v=>({papers:v.length,citations:v.reduce((sum,p)=>sum+p.citations,0)}),
+    d=>d.year
+  ));
+  const minYear=d3.min(withYears,d=>d.year), maxYear=d3.max(withYears,d=>d.year);
+  const byYear=d3.range(minYear,maxYear+1).map(year=>({
+    year,
+    papers:stats.get(year)?.papers||0,
+    citations:stats.get(year)?.citations||0
+  }));
+
+  // Give each year a readable slot. If the career range is wider than the
+  // visible panel, the chart scrolls horizontally instead of shrinking labels.
+  const availableW=Math.max(isMobile?180:220,containerW-m.l-m.r);
+  const yearSlot=isMobile?32:28;
+  const desiredW=Math.max(90,byYear.length*yearSlot);
+  const plotW=desiredW>availableW?desiredW:availableW;
+  const chartW=Math.ceil(desiredW>availableW?desiredW+m.l+m.r:containerW);
+  const x0=m.l+(chartW-m.l-m.r-plotW)/2;
+  svg.attr('width',chartW).attr('height',H).attr('viewBox',null)
+    .style('width',`${chartW}px`).style('min-width',`${chartW}px`);
+  wrap?.classList.toggle('has-overflow',chartW>containerW+1);
+  if(hint) hint.textContent=chartW>containerW+1?'Swipe sideways to see every year':'';
+
+  const x=d3.scaleBand()
+    .domain(byYear.map(d=>String(d.year)))
+    .range([x0,x0+plotW])
+    .padding(0.22);
+  const barW=Math.min(24,x.bandwidth());
+  const yMax=d3.max(byYear,d=>d.papers)||1;
+  const y=d3.scaleLinear()
+    .domain([0,yMax])
+    .range([H-m.b,m.t]);
+
+  // Integer-only y ticks; avoids duplicate 0/1 labels on low-count charts.
+  let yTicks;
+  if(yMax<=10){
+    yTicks=d3.range(0,yMax+1);
+  }else{
+    const step=Math.ceil(yMax/5);
+    yTicks=d3.range(0,yMax,step);
+    if(yTicks[yTicks.length-1]!==yMax) yTicks.push(yMax);
+  }
+
+  // Light gridlines align to the integer ticks.
+  svg.append('g').selectAll('line')
+    .data(yTicks)
+    .join('line')
+    .attr('x1',x0).attr('x2',x0+plotW)
+    .attr('y1',d=>y(d)).attr('y2',d=>y(d))
+    .attr('stroke','var(--border)')
+    .attr('stroke-opacity',d=>d===0?0.9:0.35);
+
+  const xAxis=svg.append('g')
+    .attr('transform',`translate(0,${H-m.b})`)
+    .call(d3.axisBottom(x).tickValues(x.domain()).tickSizeOuter(0));
+  xAxis.call(g=>g.selectAll('path,line').attr('stroke','var(--border2)'));
+  xAxis.call(g=>g.selectAll('text')
+    .attr('fill','var(--muted)')
+    .attr('font-size',byYear.length>35?8:9)
+    .attr('transform',byYear.length>14?'rotate(-55)':null)
+    .attr('text-anchor',byYear.length>14?'end':'middle')
+    .attr('dx',byYear.length>14?'-0.45em':0)
+    .attr('dy',byYear.length>14?'0.15em':'0.71em'));
+
+  svg.append('g')
+    .attr('transform',`translate(${m.l},0)`)
+    .call(d3.axisLeft(y).tickValues(yTicks).tickFormat(d3.format('d')).tickSizeOuter(0))
+    .call(g=>g.selectAll('path,line').attr('stroke','var(--border2)'))
+    .call(g=>g.selectAll('text').attr('fill','var(--muted)').attr('font-size',9));
+
+  svg.append('g').selectAll('rect')
+    .data(byYear)
+    .join('rect')
+    .attr('x',d=>x(String(d.year))+(x.bandwidth()-barW)/2)
+    .attr('y',d=>y(d.papers))
+    .attr('width',barW)
+    .attr('height',d=>y(0)-y(d.papers))
+    .attr('rx',2)
+    .attr('fill','var(--accent)')
+    .attr('fill-opacity',d=>d.papers?0.78:0)
+    .append('title')
+    .text(d=>`${d.year}: ${d.papers} paper${d.papers===1?'':'s'} · ${d.citations.toLocaleString()} citation${d.citations===1?'':'s'}`);
+
+  svg.append('text')
+    .attr('x',m.l).attr('y',10)
+    .attr('fill','var(--muted)')
+    .attr('font-size',9.5)
+    .text('Publications per year — every year shown · hover a bar for citations');
+}
+
+function renderAffPaperList(papers){
+  const el=document.getElementById('aff-papers');
+  if(!el) return;
+  el.innerHTML=papers.length?papers.map(p=>{
+    const href=p.id||'#';
+    return `<div class="aff-paper">
+      <span class="aff-paper-year">${p.year||'—'}</span>
+      <span style="min-width:0;">
+        <a class="aff-paper-title" href="${escHTML(href)}" target="_blank" rel="noopener" title="${escHTML(p.title)}">${escHTML(p.title)}</a>
+        <span class="aff-paper-authors">${escHTML(p.authors.join(' · '))}</span>
+      </span>
+      <span class="aff-paper-cites">${p.citations.toLocaleString()} cites</span>
+    </div>`;
+  }).join(''):'<div class="aff-empty">No papers found for this affiliation.</div>';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1890,6 +2466,15 @@ function redraw(){
   if(vizMode==='geo'){drawGeo();return;}
   const vis=getVisible();
   if(!vis.length){
+    // In multi-researcher mode still show the selected researchers themselves
+    // (plus any direct links between them), even when no co-author currently
+    // passes the display filters.
+    if(authorRecs.length>1){
+      hideStatus();
+      updateVLegend();
+      drawNetwork([]);
+      return;
+    }
     // Stop any running simulation and clear the canvas so nothing freezes
     if(sim){sim.stop();sim=null;}
     document.getElementById('graph').innerHTML='';
@@ -1909,16 +2494,15 @@ function redraw(){
 // Only includes pairs where both A and B are in the visible node set.
 function buildInterLinks(visibleIds){
   const vis=new Set(visibleIds);
-  const mainId=authorRec.id;
   const pairMap={};
 
   getBylineFilteredPapers().forEach(paper=>{
     const auths=paper.authorships||[];
-    if(!auths.some(a=>a.author?.id===mainId)) return;
+    if(!hasMainAuthor(auths)) return;
 
     const coOnPaper=auths
       .map(a=>a.author?.id)
-      .filter(id=>id&&id!==mainId&&vis.has(id));
+      .filter(id=>id&&!isMainAuthorId(id)&&vis.has(id));
 
     if(coOnPaper.length<2) return;
 
@@ -1935,6 +2519,31 @@ function buildInterLinks(visibleIds){
     }
   });
 
+  return Object.values(pairMap);
+}
+
+// Direct collaboration links between the selected researchers themselves.
+// These stay outside the maxLinks cap so selected-author relationships are
+// never dropped from the graph.
+function buildMainPairLinks(){
+  if(authorRecs.length<2) return [];
+  const pairMap={};
+  getBylineFilteredPapers().forEach(paper=>{
+    const mains=[...new Set((paper.authorships||[])
+      .map(a=>a.author?.id)
+      .filter(id=>isMainAuthorId(id)))];
+    if(mains.length<2) return;
+    const frac=1/Math.max(1,mains.length-1);
+    for(let i=0;i<mains.length;i++){
+      for(let j=i+1;j<mains.length;j++){
+        const a=mains[i],b=mains[j];
+        const key=a<b?`${a}|||${b}`:`${b}|||${a}`;
+        if(!pairMap[key]) pairMap[key]={source:a,target:b,count:0,strength:0,isMainPair:true,isInter:false};
+        pairMap[key].count++;
+        pairMap[key].strength+=frac;
+      }
+    }
+  });
   return Object.values(pairMap);
 }
 
@@ -1994,38 +2603,68 @@ function drawNetwork(coauthors){
   svg.selectAll('*').remove();
   const W=document.getElementById('cvs').clientWidth;
   const H=document.getElementById('cvs').clientHeight;
+  const multi=authorRecs.length>1;
   const maxC=coauthors[0]?.count||1;
-  const maxS=d3.max(coauthors,d=>d.strength)||1;
   const maxCit=d3.max(coauthors,d=>d.citations)||1;
 
   const rFn=vizMode==='citations'
     ?d3.scaleSqrt().domain([0,maxCit]).range([4,34]).clamp(true)
     :d3.scaleSqrt().domain([1,maxC]).range([5,32]).clamp(true);
 
-  const citLinkColor=strength=>{ const t=Math.min(strength/maxS,1); return `rgba(79,195,247,${(0.35+t*0.55).toFixed(2)})`; };
-
-  const ctr={id:authorRec.id,label:authorRec.display_name,type:'center',r:22,count:maxC};
+  // One visible centre node per selected researcher. Links below are split by
+  // selected author, rather than merged into a single synthetic hub.
+  const centerNodes=authorRecs.map((a,i)=>({
+    id:a.id,
+    label:a.display_name,
+    type:'center',
+    r:multi?18:22,
+    count:a.works_count||0,
+    citations:a.cited_by_count||0,
+    centerColor:COLORS[i%COLORS.length],
+    centerIndex:i
+  }));
 
   const authorNodes=coauthors.map(c=>({
     id:c.id, label:c.name, type:'author',
     r:vizMode==='citations'?rFn(c.citations||0):rFn(c.count),
     count:c.count, strength:c.strength, cluster:c.cluster,
     avgYear:c.avgYear, citations:c.citations,
-    country:c.country, institution:c.institution
+    country:c.country, institution:c.institution,
+    perMain:c.perMain||{}
   }));
 
-  const nodes=[ctr,...authorNodes];
+  const nodes=[...centerNodes,...authorNodes];
 
-  const starLinks=coauthors.map(c=>({
-    source:authorRec.id, target:c.id,
-    count:c.count, strength:c.strength, isInter:false
-  }));
+  const starLinks=[];
+  coauthors.forEach(c=>{
+    if(multi){
+      const memberCount=centerNodes.reduce((n,m)=>n+(c.perMain?.[m.id]?.count>0?1:0),0);
+      centerNodes.forEach(m=>{
+        const rel=c.perMain?.[m.id];
+        if(rel?.count>0){
+          starLinks.push({
+            source:m.id,target:c.id,
+            count:rel.count,strength:rel.strength,isInter:false,
+            memberCount
+          });
+        }
+      });
+    }else if(centerNodes[0]){
+      starLinks.push({
+        source:centerNodes[0].id,target:c.id,
+        count:c.count,strength:c.strength,isInter:false
+      });
+    }
+  });
 
+  const mainPairLinks=buildMainPairLinks();
   const interLinks=interLinksEnabled
     ? buildInterLinks(coauthors.map(c=>c.id))
     : [];
 
   // ── Cap total links to maxLinks (keep strongest first) ──
+  // Selected-researcher ↔ selected-researcher edges are structural and are not
+  // counted against the display cap.
   let cappedStar=[...starLinks].sort((a,b)=>b.strength-a.strength);
   let cappedInter=[...interLinks].sort((a,b)=>b.strength-a.strength);
   if(interLinksEnabled && interLinks.length){
@@ -2038,10 +2677,13 @@ function drawNetwork(coauthors){
     cappedInter=[];
   }
 
+  const maxStarS=d3.max(cappedStar,d=>d.strength)||1;
   const maxInterS=cappedInter.length ? d3.max(cappedInter,d=>d.strength)||1 : 1;
-  const links=[...cappedStar,...cappedInter];
+  const maxMainS=d3.max(mainPairLinks,d=>d.strength)||1;
+  const links=[...mainPairLinks,...cappedStar,...cappedInter];
+  const citLinkColor=strength=>{ const t=Math.min(strength/maxStarS,1); return `rgba(79,195,247,${(0.35+t*0.55).toFixed(2)})`; };
 
-  // ── Determine cluster assignments for ALL nodes ──
+  // ── Determine cluster assignments for co-author nodes ──
   // When Co-links on: use Louvain on inter-links
   // When Co-links off: use topic-based cluster from coData
   let clusterMap={};
@@ -2053,48 +2695,135 @@ function drawNetwork(coauthors){
     numClusters=Math.max(...Object.values(commMap))+1;
     authorNodes.forEach(n=>{ clusterMap[n.id]=commMap[n.id]??0; });
   } else {
-    // Use topic cluster from coData
     const clusterSet=new Set(authorNodes.map(n=>n.cluster));
     const clusterList=[...clusterSet].sort((a,b)=>a-b);
-    numClusters=clusterList.length;
+    numClusters=Math.max(1,clusterList.length);
     const clusterIndex={};
     clusterList.forEach((c,i)=>clusterIndex[c]=i);
     authorNodes.forEach(n=>{ clusterMap[n.id]=clusterIndex[n.cluster]??0; });
   }
 
-  // ── Pre-position: place each cluster in its own sector ──
-  // Sector seeding ensures same-cluster nodes start close together
-  // so the force sim only needs to refine, not fight random positions
+  // ── Spatial anchors ──
+  // Single-researcher networks keep the original topic/community sectors. In
+  // multi-researcher mode, ownership is the primary spatial grouping instead:
+  // exclusive co-authors sit beyond their selected researcher, while shared
+  // co-authors form a bridge between the researchers they actually connect.
   const R=Math.min(W,H)*0.32;
-  const clusterCounts={};
-  authorNodes.forEach(n=>{ const c=clusterMap[n.id]; clusterCounts[c]=(clusterCounts[c]||0)+1; });
+  const centerAnchors={};
+  const centerCount=centerNodes.length;
+  let centerSeparation=180;
+  const canvasPad=Math.max(28,Math.min(56,Math.min(W,H)*0.07));
+  const clampX=x=>Math.max(canvasPad,Math.min(W-canvasPad,x));
+  const clampY=y=>Math.max(canvasPad,Math.min(H-canvasPad,y));
 
-  const clusterIdx={};
-  authorNodes.forEach(n=>{
-    const c=clusterMap[n.id];
-    if(!clusterIdx[c]) clusterIdx[c]=0;
-    const totalInCluster=clusterCounts[c];
-    const posInCluster=clusterIdx[c]++;
+  if(centerCount===1){
+    centerNodes[0].x=W/2; centerNodes[0].y=H/2;
+    centerAnchors[centerNodes[0].id]={x:W/2,y:H/2};
+  }else{
+    const anchorMargin=Math.max(48,Math.min(90,Math.min(W,H)*0.09));
+    const anchorRx=centerCount===2
+      ? Math.max(86,Math.min(W*0.28,W/2-anchorMargin))
+      : Math.max(96,Math.min(W*0.30,W/2-anchorMargin));
+    const anchorRy=centerCount===2
+      ? 0
+      : Math.max(86,Math.min(H*0.25,H/2-anchorMargin));
+    centerSeparation=centerCount===2?anchorRx*2:Math.max(anchorRx,anchorRy)*1.55;
 
-    // Sector centre angle for this cluster
-    const sectorAngle=(c/numClusters)*2*Math.PI - Math.PI/2;
-    // Spread nodes within their sector (±sectorWidth/2)
-    const sectorWidth=(2*Math.PI/numClusters)*0.75;
-    const spread=totalInCluster>1?(posInCluster/(totalInCluster-1)-0.5)*sectorWidth:0;
-    const angle=sectorAngle+spread;
-    // Vary radius slightly so nodes don't all sit on the same ring
-    const r=R*(0.7+0.5*(posInCluster/Math.max(totalInCluster-1,1)));
-    n.x=W/2 + Math.cos(angle)*r;
-    n.y=H/2 + Math.sin(angle)*r;
-  });
-  ctr.x=W/2; ctr.y=H/2;
+    centerNodes.forEach((n,i)=>{
+      // Two researchers read most clearly left/right; larger sets use an ellipse.
+      const angle=centerCount===2
+        ? Math.PI-i*Math.PI
+        : (i/centerCount)*2*Math.PI-Math.PI/2;
+      const x=clampX(W/2+Math.cos(angle)*anchorRx);
+      const y=clampY(H/2+Math.sin(angle)*anchorRy);
+      n.x=x; n.y=y;
+      centerAnchors[n.id]={x,y};
+    });
+  }
 
-  // ── Cluster centroid attraction force ──
-  // Continuously pulls nodes toward their cluster's current centroid
-  // strength scales with number of clusters so small graphs aren't over-constrained
+  if(multi){
+    const byOwner={};
+    centerNodes.forEach(m=>byOwner[m.id]=[]);
+    const sharedNodes=[];
+
+    authorNodes.forEach(n=>{
+      n.memberIds=centerNodes
+        .filter(m=>n.perMain?.[m.id]?.count>0)
+        .map(m=>m.id);
+      if(n.memberIds.length===1) byOwner[n.memberIds[0]].push(n);
+      else sharedNodes.push(n);
+    });
+
+    centerNodes.forEach((m,i)=>{
+      const anchor=centerAnchors[m.id];
+      let ox=anchor.x-W/2, oy=anchor.y-H/2;
+      let len=Math.hypot(ox,oy);
+      if(len<1){
+        const fallbackAngle=(i/centerCount)*2*Math.PI-Math.PI/2;
+        ox=Math.cos(fallbackAngle); oy=Math.sin(fallbackAngle); len=1;
+      }
+      ox/=len; oy/=len;
+      const tx=-oy, ty=ox;
+      const group=byOwner[m.id].sort((a,b)=>
+        (clusterMap[a.id]-clusterMap[b.id])||b.count-a.count||a.label.localeCompare(b.label)
+      );
+      const radialBase=Math.max(74,Math.min(170,Math.min(W,H)*0.22));
+      const fullSpread=Math.min(
+        Math.max(100,group.length*18),
+        Math.max(120,Math.min(W,H)*0.48)
+      );
+
+      group.forEach((n,j)=>{
+        const pos=group.length>1?j/(group.length-1)-0.5:0;
+        const lane=(j%3)-1;
+        const radial=radialBase+lane*24;
+        const targetX=clampX(anchor.x+ox*radial+tx*pos*fullSpread);
+        const targetY=clampY(anchor.y+oy*radial+ty*pos*fullSpread);
+        n.x=targetX; n.y=targetY;
+        n.layoutTarget={x:targetX,y:targetY,strength:0.17};
+      });
+    });
+
+    sharedNodes.sort((a,b)=>
+      b.memberIds.length-a.memberIds.length||b.count-a.count||a.label.localeCompare(b.label)
+    );
+    const sharedRadius=Math.max(18,Math.min(90,24+sharedNodes.length*2,Math.min(W,H)*0.14));
+    sharedNodes.forEach((n,i)=>{
+      const points=n.memberIds.map(id=>centerAnchors[id]).filter(Boolean);
+      const cx=points.reduce((sum,p)=>sum+p.x,0)/Math.max(1,points.length)||W/2;
+      const cy=points.reduce((sum,p)=>sum+p.y,0)/Math.max(1,points.length)||H/2;
+      const angle=sharedNodes.length>1?(i/sharedNodes.length)*2*Math.PI-Math.PI/2:0;
+      const ring=sharedNodes.length>1?sharedRadius*(0.35+0.45*((i%3)/2)):0;
+      const targetX=clampX(cx+Math.cos(angle)*ring);
+      const targetY=clampY(cy+Math.sin(angle)*ring);
+      n.x=targetX; n.y=targetY;
+      n.layoutTarget={x:targetX,y:targetY,strength:0.11};
+    });
+  }else{
+    // ── Pre-position: place each topic/community cluster in its own sector ──
+    const clusterCounts={};
+    authorNodes.forEach(n=>{ const c=clusterMap[n.id]; clusterCounts[c]=(clusterCounts[c]||0)+1; });
+
+    const clusterIdx={};
+    authorNodes.forEach(n=>{
+      const c=clusterMap[n.id];
+      if(!clusterIdx[c]) clusterIdx[c]=0;
+      const totalInCluster=clusterCounts[c];
+      const posInCluster=clusterIdx[c]++;
+
+      const sectorAngle=(c/numClusters)*2*Math.PI - Math.PI/2;
+      const sectorWidth=(2*Math.PI/numClusters)*0.75;
+      const spread=totalInCluster>1?(posInCluster/(totalInCluster-1)-0.5)*sectorWidth:0;
+      const angle=sectorAngle+spread;
+      const r=R*(0.7+0.5*(posInCluster/Math.max(totalInCluster-1,1)));
+      n.x=W/2 + Math.cos(angle)*r;
+      n.y=H/2 + Math.sin(angle)*r;
+    });
+  }
+
+  // ── Cluster centroid attraction force (single-researcher layout) ──
   const clusterForceStrength=Math.min(0.12, 0.04*Math.sqrt(numClusters));
   function clusterForce(alpha){
-    // Compute current centroids
     const cx={}, cy={}, cn={};
     authorNodes.forEach(n=>{
       const c=clusterMap[n.id];
@@ -2105,6 +2834,23 @@ function drawNetwork(coauthors){
       const mx=cx[c]/cn[c], my=cy[c]/cn[c];
       n.vx+=(mx-n.x)*clusterForceStrength*alpha;
       n.vy+=(my-n.y)*clusterForceStrength*alpha;
+    });
+  }
+
+  // Multi-researcher ownership force. It only changes geometry: the node and
+  // edge data still come directly from shared publications.
+  function researcherLayoutForce(alpha){
+    authorNodes.forEach(n=>{
+      const t=n.layoutTarget;
+      if(!t) return;
+      n.vx+=(t.x-n.x)*t.strength*alpha;
+      n.vy+=(t.y-n.y)*t.strength*alpha;
+    });
+    centerNodes.forEach(n=>{
+      const a=centerAnchors[n.id];
+      if(!a) return;
+      n.vx+=(a.x-n.x)*0.18*alpha;
+      n.vy+=(a.y-n.y)*0.18*alpha;
     });
   }
 
@@ -2125,22 +2871,30 @@ function drawNetwork(coauthors){
       .alphaDecay(0.04)
       .velocityDecay(0.6)
       .force('link', d3.forceLink(links).id(d=>d.id)
-        .distance(d=>d.isInter
-          ? 40 + 80*(1 - Math.min(d.strength/maxInterS,1))
-          : 160 + 100*(1 - d.strength/maxS))
-        .strength(d=>d.isInter
-          ? 0.18 + 0.25*(d.strength/maxInterS)
-          : 0.01 + 0.03*(d.strength/maxS)))
+        .distance(d=>{
+          if(d.isMainPair) return multi?Math.max(170,centerSeparation*0.9):105;
+          if(d.isInter) return (multi?34:40)+80*(1-Math.min(d.strength/maxInterS,1));
+          const norm=Math.min(d.strength/maxStarS,1);
+          return multi
+            ? (d.memberCount>1?92:78)+72*(1-norm)
+            : 145+100*(1-norm);
+        })
+        .strength(d=>{
+          if(d.isMainPair) return multi?0.07:0.3;
+          if(d.isInter) return (multi?0.13:0.18)+(multi?0.20:0.25)*(d.strength/maxInterS);
+          const norm=Math.min(d.strength/maxStarS,1);
+          return multi?0.08+0.18*norm:0.02+0.05*norm;
+        }))
       .force('charge', d3.forceManyBody()
         .strength(d=>{
           const k=degMap[d.id]||1;
-          return d.type==='center' ? -3000 : -(200 + k*120 + d.r*15);
+          return d.type==='center' ? -(multi?1900:3000) : -(200+k*120+d.r*15);
         })
         .distanceMax(600))
-      .force('cluster', clusterForce)
-      .force('center', d3.forceCenter(W/2,H/2).strength(0.03))
+      .force('cluster', multi?researcherLayoutForce:clusterForce)
+      .force('center', d3.forceCenter(W/2,H/2).strength(multi?0.012:0.03))
       .force('collision', d3.forceCollide()
-        .radius(d=>d.r+22)
+        .radius(d=>d.type==='center'?d.r+(multi?36:30):d.r+22)
         .strength(0.9)
         .iterations(4));
   } else {
@@ -2148,18 +2902,27 @@ function drawNetwork(coauthors){
       .alphaDecay(0.04)
       .velocityDecay(0.55)
       .force('link', d3.forceLink(links).id(d=>d.id)
-        .distance(d=>55+190*(1-d.strength/maxS))
-        .strength(d=>0.02+0.4*(d.strength/maxS)))
+        .distance(d=>{
+          if(d.isMainPair) return multi?Math.max(170,centerSeparation*0.9):105;
+          const norm=Math.min(d.strength/maxStarS,1);
+          return multi
+            ? (d.memberCount>1?88:72)+76*(1-norm)
+            : 55+190*(1-norm);
+        })
+        .strength(d=>{
+          if(d.isMainPair) return multi?0.07:0.32;
+          const norm=Math.min(d.strength/maxStarS,1);
+          return multi?0.08+0.18*norm:0.02+0.4*norm;
+        }))
       .force('charge', d3.forceManyBody()
-        .strength(d=>d.type==='center'?-1800:-80-d.r*4)
+        .strength(d=>d.type==='center'?-(multi?1600:1800):(multi?-120-d.r*5:-80-d.r*4))
         .distanceMax(800))
-      .force('cluster', clusterForce)
-      .force('center', d3.forceCenter(W/2,H/2).strength(0.04))
-      .force('collision', d3.forceCollide().radius(d=>d.r+6).strength(0.7).iterations(2));
+      .force('cluster', multi?researcherLayoutForce:clusterForce)
+      .force('center', d3.forceCenter(W/2,H/2).strength(multi?0.012:0.04))
+      .force('collision', d3.forceCollide().radius(d=>d.type==='center'?d.r+(multi?32:24):d.r+(multi?10:6)).strength(multi?0.82:0.7).iterations(multi?3:2));
   }
 
   // Pre-compute layout silently — nodes appear in settled positions from first frame
-  // No viewport clamping: the graph is zoomable/pannable so nodes can live outside the initial view
   sim.tick(200);
 
   zoomB=d3.zoom().scaleExtent([0.04,10]).on('zoom',e=>g.attr('transform',e.transform));
@@ -2169,17 +2932,22 @@ function drawNetwork(coauthors){
   // Links
   const lnk=g.append('g').attr('class','links').selectAll('line').data(links).join('line')
     .attr('stroke',d=>{
+      if(d.isMainPair) return 'var(--accent)';
       if(d.isInter) return dark?'rgba(171,71,188,0.85)':'rgba(106,27,154,0.65)';
       return vizMode==='citations'
         ? citLinkColor(d.strength)
         : (dark?'rgba(200,210,255,0.55)':'rgba(60,70,120,0.38)');
     })
-    .attr('stroke-width',d=>d.isInter
-      ? 0.8+(d.strength/maxInterS)*2.5
-      : 1.2+(d.strength/maxS)*6)
-    .attr('stroke-opacity',d=>d.isInter
-      ? 0.45+(d.strength/maxInterS)*0.5
-      : 0.45+(d.strength/maxS)*0.5)
+    .attr('stroke-width',d=>d.isMainPair
+      ? 1.8+(d.strength/maxMainS)*3
+      : d.isInter
+        ? 0.8+(d.strength/maxInterS)*2.5
+        : 1.2+(d.strength/maxStarS)*6)
+    .attr('stroke-opacity',d=>d.isMainPair
+      ? 0.85
+      : d.isInter
+        ? 0.45+(d.strength/maxInterS)*0.5
+        : 0.45+(d.strength/maxStarS)*0.5)
     .attr('stroke-dasharray',d=>d.isInter?'3,3':null);
 
   // Nodes
@@ -2195,14 +2963,14 @@ function drawNetwork(coauthors){
     .attr('r',d=>d.r)
     .attr('fill',d=>d.type==='center'?'#fff':COLORS[d.cluster%COLORS.length])
     .attr('fill-opacity',d=>d.type==='center'?1:0.82)
-    .attr('stroke',d=>d.type==='center'?'var(--accent)':'rgba(255,255,255,0.15)')
+    .attr('stroke',d=>d.type==='center'?(d.centerColor||'var(--accent)'):'rgba(255,255,255,0.15)')
     .attr('stroke-width',d=>d.type==='center'?2.5:0.7);
 
   nd.append('text')
     .attr('dy',d=>d.r+9*labelScale)
     .attr('text-anchor','middle')
     .attr('font-family','IBM Plex Sans,sans-serif')
-    .attr('font-size',d=>`${(d.type==='center'?11:Math.max(7.5,6.5+(d.count/maxC)*5))*labelScale}px`)
+    .attr('font-size',d=>`${(d.type==='center'?10.5:Math.max(7.5,6.5+(d.count/maxC)*5))*labelScale}px`)
     .attr('fill',dark?'#dde1ec':'#1a1d2e')
     .attr('pointer-events','none')
     .text(d=>d.label?.length>24?d.label.slice(0,22)+'…':d.label);
@@ -2223,11 +2991,18 @@ function drawNetwork(coauthors){
       if(liveInstitution) h+=`<div class="tr" style="color:var(--text2);font-size:10.5px;margin-bottom:2px;white-space:normal;line-height:1.4">${liveInstitution}</div>`;
       h+=`<div class="tr">Shared papers: <span class="tv" style="${isFiltered?'color:var(--yellow)':''}">${liveCount}</span></div>`;
       h+=`<div class="tr">Link strength: <span class="tv" style="${isFiltered?'color:var(--yellow)':''}">${liveStrength?.toFixed(3)}</span></div>`;
+      if(multi&&live?.perMain){
+        const breakdown=authorRecs
+          .map(a=>({name:a.display_name,rel:live.perMain[a.id]}))
+          .filter(x=>x.rel?.count>0)
+          .map(x=>`${x.name}: ${x.rel.count}`)
+          .join(' · ');
+        if(breakdown) h+=`<div class="tr" style="white-space:normal;line-height:1.45;color:var(--text2);font-size:10px">With: ${breakdown}</div>`;
+      }
       h+=`<div class="tr">Citations: <span class="tv">${liveCitations?liveCitations.toLocaleString():'—'}</span></div>`;
       h+=`<div class="tr">Avg collab year: <span class="tv">${liveAvgYear||'—'}</span></div>`;
       if(liveCountry) h+=`<div class="tr">Country: <span class="tv">${liveCountry}</span></div>`;
       if(interLinksEnabled){
-        // Always use full unfiltered interLinks so count is never affected by maxLinks filter
         const n=interLinks.filter(l=>{
           const s=l.source?.id||l.source, t=l.target?.id||l.target;
           return s===d.id||t===d.id;
@@ -2238,31 +3013,44 @@ function drawNetwork(coauthors){
       h+=`<div class="tr" style="color:var(--muted);font-size:9.5px;font-family:'IBM Plex Mono',monospace;margin-top:2px;">${d.id.replace('https://openalex.org/','')}</div>`;
       h+=`<div class="tr" style="margin-top:3px;color:var(--muted);font-size:10px">Click to highlight · Right-click for OpenAlex ↗</div>`;
     } else {
-      const {institution:inst,country}=bestInstitution(authorRec);
-      const orcid=authorRec.orcid?.replace('https://orcid.org/','');
+      const rec=authorRecs.find(a=>a.id===d.id)||authorRec;
+      const {institution:inst,country}=bestInstitution(rec);
+      const orcid=rec.orcid?.replace('https://orcid.org/','');
       if(inst) h+=`<div class="tr" style="color:var(--text2);font-size:10.5px;margin-bottom:3px;white-space:normal;line-height:1.4">${inst}${country?' · '+country:''}</div>`;
       if(orcid) h+=`<div class="tr">ORCID: <span class="tv" style="font-family:'IBM Plex Mono',monospace;font-size:10px">${orcid}</span></div>`;
-      // Use filtered values matching the sidebar
-      const tipPapers=getBylineFilteredPapers();
-      const tipFiltered=tipPapers.length<allPapers.length;
-      const tipCites=tipPapers.reduce((s,p)=>s+(p.cited_by_count||0),0);
-      const tipCoauthors=getFilterVisible().filter(c=>c.count>0).length;
-      h+=`<div class="tr">Publications: <span class="tv" style="${tipFiltered?'color:var(--yellow)':''}">${tipPapers.length.toLocaleString()}${tipFiltered?` / ${allPapers.length}`:''}</span></div>`;
-      h+=`<div class="tr">Citations: <span class="tv" style="${tipFiltered?'color:var(--yellow)':''}">${tipFiltered?tipCites.toLocaleString():(authorRec.cited_by_count||0).toLocaleString()}</span></div>`;
-      if(authorRec.summary_stats?.h_index) h+=`<div class="tr">h-index: <span class="tv">${authorRec.summary_stats.h_index}</span></div>`;
-      if(authorRec.summary_stats?.['2yr_mean_citedness']) h+=`<div class="tr">2yr mean citedness: <span class="tv">${authorRec.summary_stats['2yr_mean_citedness'].toFixed(2)}</span></div>`;
+
+      const tipPapers=multi
+        ? getBylineFilteredPapers().filter(p=>(p.authorships||[]).some(a=>a.author?.id===d.id))
+        : getBylineFilteredPapers();
+      const tipFiltered=multi
+        ? getBylineFilteredPapers().length<allPapers.length
+        : tipPapers.length<allPapers.length;
+      const tipCites=tipPapers.reduce((sum,p)=>sum+(p.cited_by_count||0),0);
+      const tipCoauthors=multi
+        ? getFilterVisible().filter(c=>c.perMain?.[d.id]?.count>0).length
+        : getFilterVisible().filter(c=>c.count>0).length;
+      h+=`<div class="tr">Publications: <span class="tv" style="${tipFiltered?'color:var(--yellow)':''}">${tipPapers.length.toLocaleString()}${multi&&tipFiltered?` / ${allPapers.filter(p=>(p.authorships||[]).some(a=>a.author?.id===d.id)).length}`:multi?'':tipFiltered?` / ${allPapers.length}`:''}</span></div>`;
+      h+=`<div class="tr">Citations: <span class="tv" style="${tipFiltered?'color:var(--yellow)':''}">${multi?tipCites.toLocaleString():(tipFiltered?tipCites.toLocaleString():(rec.cited_by_count||0).toLocaleString())}</span></div>`;
+      if(rec.summary_stats?.h_index) h+=`<div class="tr">h-index: <span class="tv">${rec.summary_stats.h_index}</span></div>`;
+      if(rec.summary_stats?.['2yr_mean_citedness']) h+=`<div class="tr">2yr mean citedness: <span class="tv">${rec.summary_stats['2yr_mean_citedness'].toFixed(2)}</span></div>`;
       h+=`<div class="tr">Co-authors: <span class="tv" style="${tipFiltered?'color:var(--yellow)':''}">${tipCoauthors.toLocaleString()}</span></div>`;
+      if(multi&&mainPairLinks.length){
+        const directCount=mainPairLinks.reduce((sum,l)=>{
+          const s=l.source?.id||l.source,t=l.target?.id||l.target;
+          return sum+(s===d.id||t===d.id?l.count:0);
+        },0);
+        if(directCount) h+=`<div class="tr">Shared selected papers: <span class="tv" style="color:var(--accent)">${directCount}</span></div>`;
+      }
       if(interLinksEnabled && interLinks.length)
         h+=`<div class="tr">Total co-links: <span class="tv" style="color:rgba(171,71,188,0.9)">${interLinks.length.toLocaleString()}</span></div>`;
-      h+=`<div class="tr" style="margin-top:3px;color:var(--muted);font-size:10px">Click to deselect · Right-click for OpenAlex ↗</div>`;
+      h+=`<div class="tr" style="margin-top:3px;color:var(--muted);font-size:10px">${multi?'Click to highlight this researcher':'Click to deselect'} · Right-click for OpenAlex ↗</div>`;
     }
     tip.innerHTML=h; tip.style.display='block';
     placeTip(tip,e.clientX,e.clientY);
   }).on('mouseleave',()=>tip.style.display='none')
     .on('click',(e,d)=>{
       e.stopPropagation();
-      if(d.type==='center'){
-        // Click center = deselect everything
+      if(d.type==='center'&&!multi){
         deselAll();
       } else {
         selNode(d.id);
@@ -2270,7 +3058,7 @@ function drawNetwork(coauthors){
     })
     .on('contextmenu',(e,d)=>{
       e.preventDefault();
-      if(d.id) window.open(d.id,'_blank');
+      if(d.id&&String(d.id).startsWith('https://openalex.org/')) window.open(d.id,'_blank');
     });
 
   sim.on('tick',()=>{
@@ -2283,11 +3071,12 @@ function drawNetwork(coauthors){
   lnk.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
      .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
   nd.attr('transform',d=>`translate(${d.x},${d.y})`);
-  // Restart at very low alpha for minor final settling only
   sim.alpha(0.06).alphaTarget(0).restart();
 
-  // Default zoom out so the full graph is visible with breathing room
-  const scale=0.72;
+  // Default zoom out so the full graph is visible with breathing room. The
+  // multi-researcher layout uses a wider canvas separation, so start slightly
+  // farther back to keep all ego-networks in frame.
+  const scale=multi?0.64:0.72;
   svg.call(zoomB.transform, d3.zoomIdentity
     .translate(W*(1-scale)/2, H*(1-scale)/2)
     .scale(scale));
@@ -2358,7 +3147,7 @@ function drawFunders(){
   const maxC=funders[0]?.count||1;
   const rSc=d3.scaleSqrt().domain([1,maxC]).range([6,38]).clamp(true);
 
-  const ctr={id:'_main',label:authorRec.display_name,type:'center',r:22};
+  const ctr={id:'_main',label:mainAuthorLabel(),type:'center',r:22};
   const funderSlice=funders.slice(0,Math.min(60,maxLinks));
   const funderNodes=funderSlice.map(f=>({
     id:f.name,label:f.name,type:'funder',r:rSc(f.count),count:f.count,
@@ -2676,7 +3465,7 @@ async function drawGeo(){
     const countriesOnPaper=new Set();
     auths.forEach(a=>{
       const id=a.author?.id;
-      if(!id||id===authorRec.id) return;
+      if(!id||isMainAuthorId(id)) return;
       if(!visibleIds.has(id)) return;
       const geo=geoEnrich[id];
       if(geo?.country) countriesOnPaper.add(geo.country.toUpperCase());
@@ -3067,7 +3856,7 @@ async function exportPNG(){
     if(authorRec){
       ctx.font='11px IBM Plex Sans,sans-serif';
       ctx.fillStyle='#9aa0b8';
-      ctx.fillText(authorRec.display_name,cx+dotR+8,cy+18);
+      ctx.fillText(mainAuthorLabel(),cx+dotR+8,cy+18);
     }
 
     // coauthra.com watermark top-right
@@ -3079,7 +3868,7 @@ async function exportPNG(){
 
     // Download
     const link=document.createElement('a');
-    const name=(authorRec?.display_name||'network').replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
+    const name=(mainAuthorLabel()||'network').replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'');
     link.download=`CoAuthra_${name}.png`;
     link.href=canvas.toDataURL('image/png');
     link.click();
@@ -3099,18 +3888,20 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(cl){const u='joebarnier1',d='gmail.com';cl.innerHTML=`Contact <a href="mailto:${u}@${d}" style="color:var(--accent);text-decoration:none;">${u}@${d}</a><a href="https://au.linkedin.com/in/joe-barnier-a227421b2" target="_blank" rel="noopener" title="LinkedIn" style="display:inline-flex;vertical-align:middle;margin-left:7px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="#0A66C2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>`;}
 
   // ── Permalink auto-load ──
-  // If URL contains ?author=A12345678, auto-load that author silently
+  // Supports ?author=A12345678 and multi-select ?authors=A1,A2,A3
   const params=new URLSearchParams(window.location.search);
   const authorParam=params.get('author');
-  if(authorParam){
+  const authorsParam=params.get('authors');
+  const permalinkIds=[...new Set((authorsParam||authorParam||'').split(',').map(x=>x.trim()).filter(Boolean))];
+  if(permalinkIds.length){
     // Suppress welcome modal when arriving via permalink
-    const url=`https://api.openalex.org/authors/${authorParam}`;
-    fetch(url).then(r=>r.json()).then(async d=>{
-      if(d?.id){
-        document.getElementById('share-btn').disabled=true;
-        document.getElementById('export-btn').disabled=true;
-        await loadAuthor(d);
-      }
+    document.getElementById('share-btn').disabled=true;
+    document.getElementById('export-btn').disabled=true;
+    Promise.all(permalinkIds.map(id=>
+      fetch(`https://api.openalex.org/authors/${id}`).then(r=>r.json()).catch(()=>null)
+    )).then(async recs=>{
+      const valid=recs.filter(d=>d?.id);
+      if(valid.length) await loadAuthors(valid);
     }).catch(()=>{});
     return; // skip welcome modal for permalink visits
   }
@@ -3162,7 +3953,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
         <div class="mcard">
           <h3><span>🔍</span> Search</h3>
-          <p>Type a <strong>researcher name</strong> or paste an <strong>ORCID iD</strong> and hit <em>Search</em>. CoAuthra fetches all their publications and builds a live network of collaborators — no account needed.</p>
+          <p>Type a <strong>researcher name</strong> or paste an <strong>ORCID iD</strong> and hit <em>Search</em>. In name search you can now tick multiple matches and load them together; ORCID mode also accepts multiple iDs separated by commas or spaces. CoAuthra fetches publications and builds a live network of collaborators — no account needed.</p>
         </div>
 
         <div class="mcard">
@@ -3189,7 +3980,8 @@ document.addEventListener('DOMContentLoaded',()=>{
           <p><strong>Network</strong> — co-author graph sized by shared papers.<br>
           <strong>Citations</strong> — nodes sized by co-author total citations.<br>
           <strong>Funders</strong> — funding agency connections (listed on publications).<br>
-          <strong>Geo</strong> — world map of collaboration countries.</p>
+          <strong>Geo</strong> — world map of collaboration countries.<br>
+          <strong>Affiliations</strong> — per-institution paper counts from each selected researcher's own bylines.</p>
         </div>
 
       </div>
